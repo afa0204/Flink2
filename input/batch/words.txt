@@ -1,0 +1,3 @@
+Here is a line with words in it
+We will be counting these words
+some words will be counted several times

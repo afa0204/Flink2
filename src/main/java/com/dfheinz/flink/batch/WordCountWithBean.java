@@ -48,7 +48,7 @@ public class WordCountWithBean {
 	private static final class LineSplitter implements FlatMapFunction<String, WordCountBean> {
 		@Override
 		public void flatMap(String value, Collector<WordCountBean> collector) {
-			String[] tokens = value.toLowerCase().split(" ");
+			String[] tokens = value.toLowerCase().split("\\s+");
 			for (String token : tokens) {
 				if (token.length() > 0) {
 					collector.collect(new WordCountBean(token, 1));

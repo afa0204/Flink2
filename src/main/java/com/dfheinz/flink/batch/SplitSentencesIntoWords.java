@@ -27,8 +27,7 @@ public class SplitSentencesIntoWords {
 			DataSet<String> lines = env.readTextFile("input/batch/sentences.txt");
 			
 			// Step 3: Perform Transformations and Operations
-			DataSet<String> words = lines
-				.flatMap(new LineSplitter());
+			DataSet<String> words = lines.flatMap(new LineSplitter());
 					
 			// Step 4: Write to Sink(s)
 			words.print();

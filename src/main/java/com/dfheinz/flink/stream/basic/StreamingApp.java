@@ -1,4 +1,4 @@
-package com.dfheinz.flink.stream;
+package com.dfheinz.flink.stream.basic;
 
 
 import org.apache.flink.api.java.utils.ParameterTool;

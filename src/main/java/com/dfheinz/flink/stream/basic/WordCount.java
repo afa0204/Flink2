@@ -1,4 +1,4 @@
-package com.dfheinz.flink.stream;
+package com.dfheinz.flink.stream.basic;
 
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -6,8 +6,6 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
-import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 
 public class WordCount {
@@ -24,11 +22,9 @@ public class WordCount {
 		DataStream<String> stream = env.socketTextStream(host, port);
 		
 		// Step 3: Perform Transformations and Operations
-		// Show counts for words that arrive every 5 seconds
 		DataStream<Tuple2<String, Integer>> counts = stream
 				.flatMap(new LineSplitter())
 				.keyBy(0)
-				.window(TumblingProcessingTimeWindows.of(Time.seconds(5)))
 				.sum(1);
 
 		// Step 4: Write to Sink(s)

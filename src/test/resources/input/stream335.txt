@@ -1,0 +1,4 @@
+#key,label,value,eventTimeDelay,processTimeDelay
+sensor1,EventA,A,3.0,0.1
+sensor1,EventB,B,0.1,0.1
+sensor1,EventC,C,3.0,0.1

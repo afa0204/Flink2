@@ -34,15 +34,17 @@ public class SessionWindowProcessingTime {
 				.socketTextStream(host, port)
 				.map(new EventBeanParser());
 	
-		// Process Window
+		// Step 3: Perform Transformations and Operations
 		DataStream<ProcessedSessionWindow> sessionWindows = eventStream
 				.keyBy("key")
 				.window(ProcessingTimeSessionWindows.withGap(Time.seconds(4)))
 				.process(new SessionRecordProcessWindowFunction());
+		
+		// Step 4: Write to Sink(s)
 		sessionWindows.writeAsText("output/session_windows.txt",FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 		
 
-		// Execute
+		// Step 5: Trigger Execution
 		env.execute("SessionWindowProcessingTime");
 	}
 	

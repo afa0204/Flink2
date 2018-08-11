@@ -16,7 +16,7 @@ import com.dfheinz.flink.beans.EventBean;
 import com.dfheinz.flink.beans.TireRobotOrder;
 
 
-public class CountWindowByKey {
+public class CreateTireOrders {
 
 	public static void main(String[] args) throws Exception {
 		
@@ -42,7 +42,7 @@ public class CountWindowByKey {
 		robotOrders.writeAsText("output/count_window_by_key.txt",FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 	
 		// Step 5: Trigger Execution
-		env.execute("CountWindowByKey");
+		env.execute("CreateTireOrders");
 	
 	}
 	

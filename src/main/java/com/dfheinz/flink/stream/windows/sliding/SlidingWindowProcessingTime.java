@@ -14,7 +14,7 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
 import com.dfheinz.flink.beans.EventBean;
-import com.dfheinz.flink.beans.ProcessedWindowBean;
+import com.dfheinz.flink.beans.ProcessedWindow;
 
 public class SlidingWindowProcessingTime {
 
@@ -36,7 +36,7 @@ public class SlidingWindowProcessingTime {
 
 		
 		// Step 3: Perform Transformations and Operations
-		DataStream<ProcessedWindowBean> processedWindows = eventStream
+		DataStream<ProcessedWindow> processedWindows = eventStream
 				.keyBy("key")
 				.window(SlidingProcessingTimeWindows.of(Time.seconds(10), Time.seconds(5)))
 				.process(new EventBeanProcessWindowFunction());
@@ -68,7 +68,7 @@ public class SlidingWindowProcessingTime {
 	}
 	
 	// InputType, collector<OutputType>, KeyType, Window
-	private static class EventBeanProcessWindowFunction extends ProcessWindowFunction<EventBean, ProcessedWindowBean, Tuple, TimeWindow> {
+	private static class EventBeanProcessWindowFunction extends ProcessWindowFunction<EventBean, ProcessedWindow, Tuple, TimeWindow> {
 		
 		public EventBeanProcessWindowFunction() {
 		}
@@ -77,8 +77,8 @@ public class SlidingWindowProcessingTime {
 		public void process(Tuple key,
 				Context context,
 				Iterable<EventBean> inputElements,
-				Collector<ProcessedWindowBean> collector) throws Exception {		
-			ProcessedWindowBean processedWindowBean = new ProcessedWindowBean();
+				Collector<ProcessedWindow> collector) throws Exception {		
+			ProcessedWindow processedWindowBean = new ProcessedWindow();
 			processedWindowBean.setWindowStart(context.window().getStart());
 			processedWindowBean.setWindowEnd(context.window().getEnd());
 			for (EventBean nextEvent : inputElements) {

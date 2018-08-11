@@ -14,7 +14,7 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
 import com.dfheinz.flink.beans.EventBean;
-import com.dfheinz.flink.beans.ProcessedWindowBean;
+import com.dfheinz.flink.beans.ProcessedWindow;
 
 public class FoldWithProcess {
 
@@ -36,7 +36,7 @@ public class FoldWithProcess {
 
 		
 		// Step 3: Reduce Function
-		DataStream<ProcessedWindowBean> processedWindows = eventStream
+		DataStream<ProcessedWindow> processedWindows = eventStream
 				.keyBy("key")
 				.timeWindow(Time.seconds(5))
 				.reduce(new MyReduceFunction(), new MyProcessFunction());
@@ -79,7 +79,7 @@ public class FoldWithProcess {
     }
     
 	// InputType, collector<OutputType>, KeyType, Window
-	private static class MyProcessFunction extends ProcessWindowFunction<EventBean, ProcessedWindowBean, Tuple, TimeWindow> {
+	private static class MyProcessFunction extends ProcessWindowFunction<EventBean, ProcessedWindow, Tuple, TimeWindow> {
 		
 		public MyProcessFunction() {
 		}
@@ -88,8 +88,8 @@ public class FoldWithProcess {
 		public void process(Tuple key,
 				Context context,
 				Iterable<EventBean> inputElements,
-				Collector<ProcessedWindowBean> collector) throws Exception {		
-			ProcessedWindowBean processedWindowBean = new ProcessedWindowBean();
+				Collector<ProcessedWindow> collector) throws Exception {		
+			ProcessedWindow processedWindowBean = new ProcessedWindow();
 			processedWindowBean.setWindowStart(context.window().getStart());
 			processedWindowBean.setWindowEnd(context.window().getEnd());
 			for (EventBean nextEvent : inputElements) {

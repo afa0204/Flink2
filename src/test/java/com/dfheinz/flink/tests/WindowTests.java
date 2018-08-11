@@ -42,9 +42,19 @@ public class WindowTests {
 		logger.info("Dummy Test Begin");
 	}
 	
-	
 	@Test
 	// @Ignore
+	public void testTumbleProcessingTime() {
+		try {
+			String fileName = "input/tumble_processtime.txt";
+			runEventSocketProducer(fileName);
+		} catch (Exception e) {
+			logger.error("ERROR", e);
+		}		
+	}
+	
+	@Test
+	@Ignore
 	public void testStreaming335() {
 		try {
 			System.out.println("testStream335");

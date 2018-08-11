@@ -43,6 +43,18 @@ public class WindowTests {
 	}
 	
 	@Test
+	// @Ignore
+	public void testCountWindow() {
+		try {
+			System.out.println("COUNT WINDOW TEST");
+			String fileName = "input/countwindow1.txt";
+			runEventSocketProducer(fileName);
+		} catch (Exception e) {
+			logger.error("ERROR", e);
+		}		
+	}
+	
+	@Test
 	@Ignore
 	public void testTumbleProcessingTime() {
 		try {
@@ -54,7 +66,7 @@ public class WindowTests {
 	}
 	
 	@Test
-	// @Ignore
+	@Ignore
 	public void testSessionWindow() {
 		try {
 			String fileName = "input/sessionwindow1.txt";

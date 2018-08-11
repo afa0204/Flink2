@@ -1,0 +1,16 @@
+#key,label,value,eventTimeDelay,processTimeDelay
+
+user1,user1,/marketing.xhtml,1.0,0.0
+user1,user1,/profile.xhtml,1.0,0.0
+user1,user1,/history.xhtml,1.0,0.0
+
+user1,user1,/products.xhtml,7.0,0.0
+user1,user1,/cart.xhtml,1.0,0.0
+user1,user1,/orders.xhtml,1.0,0.0
+
+user1,user1,/contacts.xhtml,6.0,0.0
+user1,user1,/info.xhtml,1.0,0.0
+user1,user1,/error.xhtml,1.0,0.0
+
+# Force End
+user1,user1,/endMarker,5.0,0.0

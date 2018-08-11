@@ -21,24 +21,27 @@ public class TumblingProcessingTime {
 
 	public static void main(String[] args) throws Exception {		
 
-		// Set up the execution environment
+		// Step 1: Get Execution Environment
 		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime);
 		String host = "localhost";
 		int port = 9999;
 		
+		// Step 2: Get Data
 		DataStream<EventBean> eventStream = env
 				.socketTextStream(host, port)
 				.map(new EventBeanParser());
 		
-		// Process Window
+		// Step 3: Perform Transformations and Operations
 		SingleOutputStreamOperator<ProcessedSumWindow> processedWindows = eventStream
 				.keyBy("key")
 				.window(TumblingProcessingTimeWindows.of(Time.seconds(2)))
 				.process(new MyProcessFunction());
+		
+		// Step 4: Write to Sink(s)
 		processedWindows.writeAsText("output/tumbling_process_time.txt",FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 		
-		// Execute
+		// Step 5: Trigger Execution
 		env.execute("TumblingProcessingTime");
 	}
 	

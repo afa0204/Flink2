@@ -1,0 +1,51 @@
+package com.dfheinz.flink.beans;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.dfheinz.flink.utils.Utils;
+
+public class ProcessedSessionWindow {
+
+	// Data
+	private long windowStart;
+	private long windowEnd;
+	private List<EventBean> events = new ArrayList<EventBean>();
+	
+	public String toString() {
+		StringBuffer buffer = new StringBuffer();
+		for (EventBean eventBean : events) {
+		  String line = String.format("WindowStart=%s WindowEnd=%s ClickTime=%s User=%s URL=%s\n", 
+				                       getTS(windowStart), getTS(windowEnd), getTS(eventBean.getProcessTime()), eventBean.getKey(), eventBean.getValue());
+		  buffer.append(line);
+		}
+		return buffer.toString();
+	}	
+	
+	
+	private String getTS(long timestamp) {
+		return Utils.getFormattedTimestamp(timestamp);
+	}
+	
+	
+	public long getWindowStart() {
+		return windowStart;
+	}
+	public void setWindowStart(long windowStart) {
+		this.windowStart = windowStart;
+	}
+	public long getWindowEnd() {
+		return windowEnd;
+	}
+	public void setWindowEnd(long windowEnd) {
+		this.windowEnd = windowEnd;
+	}
+	public List<EventBean> getEvents() {
+		return events;
+	}
+	public void setEvents(List<EventBean> events) {
+		this.events = events;
+	}
+
+	
+}

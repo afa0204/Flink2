@@ -43,10 +43,32 @@ public class WindowTests {
 	}
 	
 	@Test
-	// @Ignore
+	@Ignore
 	public void testTumbleProcessingTime() {
 		try {
 			String fileName = "input/tumble_processtime.txt";
+			runEventSocketProducer(fileName);
+		} catch (Exception e) {
+			logger.error("ERROR", e);
+		}		
+	}
+	
+	@Test
+	// @Ignore
+	public void testSessionWindow() {
+		try {
+			String fileName = "input/sessionwindow1.txt";
+			runEventSocketProducer(fileName);
+		} catch (Exception e) {
+			logger.error("ERROR", e);
+		}		
+	}
+	
+	@Test
+	@Ignore
+	public void testSlidingProcessingTime() {
+		try {
+			String fileName = "input/sliding_processtime.txt";
 			runEventSocketProducer(fileName);
 		} catch (Exception e) {
 			logger.error("ERROR", e);

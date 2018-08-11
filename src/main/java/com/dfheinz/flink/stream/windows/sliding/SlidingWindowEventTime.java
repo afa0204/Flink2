@@ -1,4 +1,4 @@
-package com.dfheinz.flink.stream.windows;
+package com.dfheinz.flink.stream.windows.sliding;
 
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.utils.ParameterTool;

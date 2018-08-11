@@ -1,0 +1,9 @@
+#key,label,value,eventTimeDelay,processTimeDelay
+Mary,Mary.home,./home,1.0,0.0
+Bob,Bob.cart,./cart,1.0,0.0
+Mary,Mary.prod,./prod?id=1,1.0,0.0
+Liz,Liz.home,./home,1.0,0.0
+
+#John,John.cart,./cart,8.0,0.0
+#Mary,Mary.prod,./prod?id=2,1.0,0.0
+#Ed,John.cart,./cart,1.0,0.0

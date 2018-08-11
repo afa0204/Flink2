@@ -1,4 +1,4 @@
-package com.dfheinz.batch.sql;
+package com.dfheinz.flink.batch.sql.tableapi;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.DataSet;
@@ -14,12 +14,12 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class InnerJoin {
+public class RightOuterJoin {
 
 	public static void main(String[] args) throws Exception {
 		
 		try {
-			System.out.println("InnerJoin BEGIN");
+			System.out.println("RightOuterJoin BEGIN");
 	
 			// Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
@@ -67,27 +67,23 @@ public class InnerJoin {
 			Table orders = tableEnv.scan("orders");
 	
 			// Perform Join
-			String queryString = 
-				"SELECT first_name,last_name,order_date,amount " +
-				"FROM customers, orders " +
-				"WHERE customer_key=customer_id";
-			Table innerJoin = tableEnv.sqlQuery(queryString);
-		
+			// Get All Orders
+			Table rightOuterJoin = customers.rightOuterJoin(orders,"customer_id=customer_key").select("first_name,last_name,order_date,amount");
 		
 			// Write to Sinks
 			int parallelism = 1;
 			
 			// Write to Sinks
-			innerJoin.printSchema();
-			DataSet<Row> result = tableEnv.toDataSet(innerJoin, Row.class);
-			result.print();
+			rightOuterJoin.printSchema();
+//			DataSet<Row> result = tableEnv.toDataSet(leftOuterJoin, Row.class);
+//			result.print();
 			
-			TableSink<Row> joinSink = new CsvTableSink("output/innerjoinsql.csv", ",", parallelism, WriteMode.OVERWRITE);
-			innerJoin.writeToSink(joinSink);
+			TableSink<Row> joinSink = new CsvTableSink("output/rightouterjoin.csv", ",", parallelism, WriteMode.OVERWRITE);
+			rightOuterJoin.writeToSink(joinSink);
 				
 					
 			// Execute
-			JobExecutionResult jobResult  =  env.execute("InnerJoin");
+			JobExecutionResult result  =  env.execute("RightOuterJoin");
 
 		
 		} catch (Exception e) {

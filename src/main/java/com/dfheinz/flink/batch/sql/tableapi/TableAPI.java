@@ -1,7 +1,6 @@
-package com.dfheinz.batch.sql;
+package com.dfheinz.flink.batch.sql.tableapi;
 
 import org.apache.flink.api.common.JobExecutionResult;
-import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
@@ -14,12 +13,12 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class LeftOuterJoin {
+public class TableAPI {
 
 	public static void main(String[] args) throws Exception {
 		
 		try {
-			System.out.println("LeftOuterJoin BEGIN");
+			System.out.println("BasicJoin BEGIN");
 	
 			// Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
@@ -48,7 +47,9 @@ public class LeftOuterJoin {
 			// Register our table source
 			tableEnv.registerTableSource("customers", customersTableSource);
 			Table customers = tableEnv.scan("customers");
-					
+
+			
+			
 			// Get Orders
 			String ordersPath = "input/orders.csv";
 			// order_id,order_date,amount,customer_id
@@ -65,27 +66,45 @@ public class LeftOuterJoin {
 			// Register our table source
 			tableEnv.registerTableSource("orders", ordersTableSource);
 			Table orders = tableEnv.scan("orders");
-	
+
+		    // Table result = left.join(right).where("a=b").select(a,b,c);
+			
+			// Perform Operations
+			// SELECT id,last_name
+			// FROM customers
+//			Table selectCustomers = customers
+//			        .select("id,last_name")
+//			        .filter("last_name !== 'foobar'");
+			
+			// Perform Operations
+			// SELECT id,last_name
+			// FROM customers
+//			Table selectOrders = orders
+//				.select("id,order_date,amount,customer_id");
+		
+			
 			// Perform Join
-			String queryString = 
-					"SELECT first_name,last_name,order_date,amount " +
-					"FROM customers LEFT JOIN orders " +
-					"ON customers.customer_id=orders.customer_key";		
-			Table leftOuterJoin = tableEnv.sqlQuery(queryString);
-			
-			
+			Table myJoin = orders.join(customers).where("customer_key=customer_id").select("first_name,last_name,amount");
+		
 			// Write to Sinks
 			int parallelism = 1;
-			leftOuterJoin.printSchema();
-			DataSet<Row> result = tableEnv.toDataSet(leftOuterJoin, Row.class);
-			result.print();
+//			selectCustomers.printSchema();
+//			TableSink<Row> sink = new CsvTableSink("output/customers.out", ",", parallelism, WriteMode.OVERWRITE);
+//			selectCustomers.writeToSink(sink);
 			
-			TableSink<Row> joinSink = new CsvTableSink("output/leftouterjoinsql.csv", ",", parallelism, WriteMode.OVERWRITE);
-			leftOuterJoin.writeToSink(joinSink);
-				
+			// Write to Sinks
+			myJoin.printSchema();
+			TableSink<Row> joinSink = new CsvTableSink("output/join.csv", ",", parallelism, WriteMode.OVERWRITE);
+			myJoin.writeToSink(joinSink);			
+			
+//			selectOrders.printSchema();
+//			TableSink<Row> ordersSink = new CsvTableSink("output/orders.out", ",", parallelism, WriteMode.OVERWRITE);
+//			selectOrders.writeToSink(ordersSink);
+			
+			
 					
 			// Execute
-			JobExecutionResult jobResult  =  env.execute("LeftOuterJoin");
+			JobExecutionResult result  =  env.execute("BasicJoin");
 
 		
 		} catch (Exception e) {

@@ -1,4 +1,4 @@
-package com.dfheinz.batch.sql;
+package com.dfheinz.flink.batch.sql.sqlapi;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.DataSet;
@@ -14,12 +14,12 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class RightOuterJoin {
+public class LeftOuterJoin {
 
 	public static void main(String[] args) throws Exception {
 		
 		try {
-			System.out.println("RightOuterJoin BEGIN");
+			System.out.println("LeftOuterJoin BEGIN");
 	
 			// Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
@@ -67,29 +67,25 @@ public class RightOuterJoin {
 			Table orders = tableEnv.scan("orders");
 	
 			// Perform Join
-			// Get All Orders
 			String queryString = 
 					"SELECT first_name,last_name,order_date,amount " +
-					"FROM customers RIGHT JOIN orders " +
-					"ON orders.customer_key=customers.customer_id";		
-			Table rightOuterJoin = tableEnv.sqlQuery(queryString);
+					"FROM customers LEFT JOIN orders " +
+					"ON customers.customer_id=orders.customer_key";		
+			Table leftOuterJoin = tableEnv.sqlQuery(queryString);
 			
 			
-		
 			// Write to Sinks
 			int parallelism = 1;
-			
-			// Write to Sinks
-			rightOuterJoin.printSchema();
-			DataSet<Row> result = tableEnv.toDataSet(rightOuterJoin, Row.class);
+			leftOuterJoin.printSchema();
+			DataSet<Row> result = tableEnv.toDataSet(leftOuterJoin, Row.class);
 			result.print();
 			
-			TableSink<Row> joinSink = new CsvTableSink("output/rightouterjoinsql.csv", ",", parallelism, WriteMode.OVERWRITE);
-			rightOuterJoin.writeToSink(joinSink);
+			TableSink<Row> joinSink = new CsvTableSink("output/leftouterjoinsql.csv", ",", parallelism, WriteMode.OVERWRITE);
+			leftOuterJoin.writeToSink(joinSink);
 				
 					
 			// Execute
-			JobExecutionResult jobResult  =  env.execute("RightOuterJoin");
+			JobExecutionResult jobResult  =  env.execute("LeftOuterJoin");
 
 		
 		} catch (Exception e) {

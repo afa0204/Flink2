@@ -24,7 +24,7 @@ public class SocketProducerServer {
 	
 	public void execute() {
 		try {
-			logger.info("SensorSocketServer Startup...");
+			logger.info("SocketProducerServer Startup...");
 			int portNumber = 9999;
 			ServerSocket serverSocket = new ServerSocket(portNumber);
 			

@@ -1,0 +1,17 @@
+#key,label,value,eventTimeDelay,processTimeDelay
+team1,A,5,1.0,0.0
+team1,B,9,0.5,0.0
+
+team1,C,7,2.0,0.0
+team1,D,8,0.2,0.0
+
+team1,E,3,2.0,0.0
+team1,F,4,0.1,0.0
+
+team1,G,3,2.0,0.0
+team1,H,3,0.1,0.0
+
+team1,I,8,2.0,0.0
+team1,J,1,0.1,0.0
+
+team1,Z,-1,5.0,0.0

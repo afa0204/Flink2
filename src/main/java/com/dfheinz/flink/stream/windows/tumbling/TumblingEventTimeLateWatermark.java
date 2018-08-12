@@ -8,6 +8,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
+import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
@@ -17,12 +18,13 @@ import org.apache.flink.util.Collector;
 
 import com.dfheinz.flink.beans.EventBean;
 import com.dfheinz.flink.beans.ProcessedSumWindowEventTime;
+import com.dfheinz.flink.utils.Utils;
 
 
-public class TumblingEventTime {
+public class TumblingEventTimeLateWatermark {
 	
-	public static void main(String[] args) throws Exception {		
-
+	public static void main(String[] args) throws Exception {
+		
 		// Step 1: Get Execution Environment
 		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
@@ -34,7 +36,8 @@ public class TumblingEventTime {
 		DataStream<EventBean> eventStream = env
 				.socketTextStream(host, port)
 				.map(new EventBeanParser())
-				.assignTimestampsAndWatermarks(new EventBeanTimestampAndWatermarkAssigner());
+				.assignTimestampsAndWatermarks(new MyTimestampAssigner(Time.seconds(7)));
+				// .assignTimestampsAndWatermarks(new EventBeanTimestampAssigner());
 		
 		// Step 3: Perform Transformations and Operations
 		SingleOutputStreamOperator<ProcessedSumWindowEventTime> processedWindows = eventStream
@@ -43,11 +46,16 @@ public class TumblingEventTime {
 				.process(new MyProcessFunction());
 		
 		// Step 4: Write to Sink(s)
-		processedWindows.writeAsText("output/tumbling_event_time.txt",FileSystem.WriteMode.OVERWRITE).setParallelism(1);
+		processedWindows.writeAsText("output/tumbling_event_time_watermark_delay.txt",FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 		
 		// Step 5: Trigger Execution
 		env.execute("TumblingEventTime");
+		
 	}
+	
+	
+
+
 	
 	// Generic Parameters: Input, Output, Key, Window
 	private static class MyProcessFunction extends ProcessWindowFunction<EventBean, ProcessedSumWindowEventTime, Tuple, TimeWindow> {
@@ -70,22 +78,15 @@ public class TumblingEventTime {
 	}
 	
 	
-	
-	private static class EventBeanTimestampAndWatermarkAssigner implements AssignerWithPeriodicWatermarks<EventBean> {
-		private long currentMaxTimestamp = 0;
-		
-	    @Override
-	    public long extractTimestamp(EventBean element, long previousElementTimestamp) {
-	        long timestamp = element.getTimestamp();
-	        currentMaxTimestamp = Math.max(timestamp, currentMaxTimestamp);
-	        return timestamp;
-	    }
+	private static class MyTimestampAssigner extends BoundedOutOfOrdernessTimestampExtractor<EventBean> {
+		public MyTimestampAssigner(Time maxOutOfOrderness) {
+			super(maxOutOfOrderness);
+		}
 
-	    @Override
-	    public Watermark getCurrentWatermark() {
-	    	return new Watermark(currentMaxTimestamp);
-	    }
-	   
+		@Override
+		public long extractTimestamp(EventBean element) {
+			return element.getTimestamp();
+		}
 	}
 	
 	private static class EventBeanParser implements MapFunction<String,EventBean> {	
@@ -100,4 +101,34 @@ public class TumblingEventTime {
 			return event;
 		}
 	}
+	
+	private static class EventBeanTimestampAssigner implements AssignerWithPeriodicWatermarks<EventBean> {	
+		private final long MAX_LATENESS=6;
+		private final long WATERMARK_ADJUSTMENT = MAX_LATENESS*1000;
+					
+		private long currentMaxTimestamp = 0;
+		private long previousWatermark = -1;
+		
+	    @Override
+	    public long extractTimestamp(EventBean element, long previousElementTimestamp) {
+	        long timestamp = element.getTimestamp();
+	        // System.out.println("Extract: " + element.getLabel() + " timestamp=" + Utils.getFormattedTimestamp(timestamp));
+	        currentMaxTimestamp = Math.max(timestamp, currentMaxTimestamp);
+	        return timestamp;
+	    }
+
+	    @Override
+	    public Watermark getCurrentWatermark() {
+	    	long watermark = currentMaxTimestamp - WATERMARK_ADJUSTMENT;
+	    	if (currentMaxTimestamp != previousWatermark) {
+	    		previousWatermark = currentMaxTimestamp;
+	    		System.out.println("Adjusted Watermark=" + Utils.getFormattedTimestamp(watermark));
+	    	}
+	    	return new Watermark(watermark);
+	    }
+	   
+	}
+	
+	
+	
 }

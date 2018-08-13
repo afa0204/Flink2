@@ -36,8 +36,8 @@ public class TumblingEventTimeLateWatermark {
 		DataStream<EventBean> eventStream = env
 				.socketTextStream(host, port)
 				.map(new EventBeanParser())
-				.assignTimestampsAndWatermarks(new MyTimestampAssigner(Time.seconds(7)));
-				// .assignTimestampsAndWatermarks(new EventBeanTimestampAssigner());
+				// .assignTimestampsAndWatermarks(new MyTimestampAssigner(Time.seconds(7)));
+				.assignTimestampsAndWatermarks(new EventBeanTimestampAssigner());
 		
 		// Step 3: Perform Transformations and Operations
 		SingleOutputStreamOperator<ProcessedSumWindowEventTime> processedWindows = eventStream
@@ -54,26 +54,25 @@ public class TumblingEventTimeLateWatermark {
 	}
 	
 	
-
-
-	
 	// Generic Parameters: Input, Output, Key, Window
 	private static class MyProcessFunction extends ProcessWindowFunction<EventBean, ProcessedSumWindowEventTime, Tuple, TimeWindow> {
 		
 		// Function Parameters: Key, Context, Input Elements, Output Collector
 		@Override
 		public void process(Tuple key,Context context,Iterable<EventBean> inputElements, Collector<ProcessedSumWindowEventTime> collector) throws Exception {		
-			System.out.println("PROCESSING WINDOW");
+			System.out.println("PROCESSING WINDOW BEGIN " + Utils.getFormattedTimestamp(context.window().getStart()));
 			ProcessedSumWindowEventTime processedSumWindow = new ProcessedSumWindowEventTime();
 			processedSumWindow.setWindowStart(context.window().getStart());
 			processedSumWindow.setWindowEnd(context.window().getEnd());
 			long computedSum = 0;
 			for (EventBean nextEvent : inputElements) {
+				System.out.println(nextEvent.getLabel() + " " + Utils.getFormattedTimestamp(nextEvent.getTimestamp()));
 				processedSumWindow.getEvents().add(nextEvent);
 				computedSum += Long.valueOf(nextEvent.getValue());
 			}
 			processedSumWindow.setComputedSum(computedSum);
 			collector.collect(processedSumWindow);
+			System.out.println("PROCESSING WINDOW END " + Utils.getFormattedTimestamp(context.window().getEnd()));
 		}
 	}
 	
@@ -103,7 +102,7 @@ public class TumblingEventTimeLateWatermark {
 	}
 	
 	private static class EventBeanTimestampAssigner implements AssignerWithPeriodicWatermarks<EventBean> {	
-		private final long MAX_LATENESS=6;
+		private final long MAX_LATENESS=8;
 		private final long WATERMARK_ADJUSTMENT = MAX_LATENESS*1000;
 					
 		private long currentMaxTimestamp = 0;
@@ -112,7 +111,7 @@ public class TumblingEventTimeLateWatermark {
 	    @Override
 	    public long extractTimestamp(EventBean element, long previousElementTimestamp) {
 	        long timestamp = element.getTimestamp();
-	        // System.out.println("Extract: " + element.getLabel() + " timestamp=" + Utils.getFormattedTimestamp(timestamp));
+	        System.out.println("Extract: " + element.getLabel() + " timestamp=" + Utils.getFormattedTimestamp(timestamp));
 	        currentMaxTimestamp = Math.max(timestamp, currentMaxTimestamp);
 	        return timestamp;
 	    }

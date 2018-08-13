@@ -19,6 +19,7 @@ import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
 import com.dfheinz.flink.beans.EventBean;
+import com.dfheinz.flink.beans.ProcessedSumWindowEventTime;
 import com.dfheinz.flink.utils.Utils;
 
 
@@ -26,91 +27,41 @@ public class TumblingEventTimeSideOutput {
 	
 	private static final OutputTag<EventBean> lateEventsTag = new OutputTag<EventBean>("late-events") {};
 
-	public static void main(String[] args) throws Exception {		
-
-		// Set up the execution environment
+	public static void main(String[] args) throws Exception {
+			
+		// Step 1: Get Execution Environment
 		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 		env.setParallelism(1);
 		String host = "localhost";
 		int port = 9999;
 		
+		// Step 2: Get Data
 		DataStream<EventBean> eventStream = env
 				.socketTextStream(host, port)
 				.map(new EventBeanParser())
-				.assignTimestampsAndWatermarks(new MyTimestampAssigner(Time.seconds(6)));
+				.assignTimestampsAndWatermarks(new MyTimestampAssigner(Time.seconds(4)));
 		
-		// Process Window
-		SingleOutputStreamOperator<EventBean> windowedEvents = eventStream
+		// Step 3: Perform Transformations and Operations
+		SingleOutputStreamOperator<ProcessedSumWindowEventTime> processedWindows = eventStream
 				.keyBy("key")
 				.window(TumblingEventTimeWindows.of(Time.seconds(2)))
 				.sideOutputLateData(lateEventsTag)
-				.process(new EventBeanProcessWindowFunction());
-		windowedEvents.writeAsText("output/windowed-events.txt",FileSystem.WriteMode.OVERWRITE);
+				.process(new MyProcessFunction());
 		
-		
-		// Late Data
-		DataStream<EventBean> lateEvents = windowedEvents.getSideOutput(lateEventsTag);
-		lateEvents.writeAsText("output/late-events.txt",FileSystem.WriteMode.OVERWRITE);
+		// Step 4: Write to Sink(s)
+		processedWindows.writeAsText("output/tumbling_event_time_watermark_delay_processed.txt",FileSystem.WriteMode.OVERWRITE).setParallelism(1);
+		DataStream<EventBean> lateEvents = processedWindows.getSideOutput(lateEventsTag);
+		lateEvents.writeAsText("output/tumbling_event_time_watermark_delay_late_events.txt",FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 
 		// Execute
-		JobExecutionResult result  =  env.execute("SensorEventTime");
-	}
-	
-
-	
-	// Template Parameters
-	// Input
-	// Output
-	// Key
-	// Window	
-	private static class EventBeanProcessWindowFunction extends ProcessWindowFunction<EventBean, EventBean, Tuple, TimeWindow> {
-
-		private static final long serialVersionUID = 1L;
-		private String appStartTime;
-		
-		public EventBeanProcessWindowFunction() {
-		}
-		
-		public EventBeanProcessWindowFunction(String appStartTime) {
-			this.appStartTime = appStartTime;
-		}
-		
-
-		// Parameters:
-		// Key
-		// Context
-		// Input elements
-		// Output collector
-		@Override
-		public void process(Tuple key,
-				Context context,
-				Iterable<EventBean> inputElements,
-				Collector<EventBean> out) throws Exception {
-			
-			System.out.println("\nPROCESS WINDOW BEGIN");
-			System.out.println("WindowStart=" +  Utils.getFormattedTimestamp(context.window().getStart()));
-			System.out.println("currentProcessingTime=" + Utils.getFormattedTimestamp(context.currentProcessingTime()));
-			System.out.println("currentWatermark=" + Utils.getFormattedTimestamp(context.currentWatermark()));
-//			KeyedStateStore  windowState = context.windowState();
-//			KeyedStateStore globalState = context.globalState();
-			
-			int count =  0;
-			for (EventBean nextEvent : inputElements) {
-				nextEvent.setWindowStart(context.window().getStart());
-				nextEvent.setWindowEnd(context.window().getEnd());
-				System.out.println(nextEvent);
-				// System.out.println(nextEvent.getLabel() + " " + Utils.getFormattedTimestamp(nextEvent.getTimestamp()));
-				out.collect(nextEvent);
-				count++;
-			}
-			// System.out.println("count=" + count);
-			System.out.println("WindowEnd=" +  Utils.getFormattedTimestamp(context.window().getEnd()));
-			System.out.println("PROCESS WINDOW END\n");
-		}
+		JobExecutionResult result  =  env.execute("TumblingEventTimeSideOutput");
 	}
 	
 	
+
+	
+
 	
 	private static class MyTimestampAssigner extends BoundedOutOfOrdernessTimestampExtractor<EventBean> {
 
@@ -124,19 +75,16 @@ public class TumblingEventTimeSideOutput {
 		}
 	}
 	
-	
-	private static class EventBeanTimestampAssigner implements AssignerWithPeriodicWatermarks<EventBean> {
-		
+	private static class EventBeanTimestampAssigner implements AssignerWithPeriodicWatermarks<EventBean> {	
 		private final long MAX_LATENESS=6;
 		private final long WATERMARK_ADJUSTMENT = MAX_LATENESS*1000;
 					
-		private long currentMaxTimestamp = System.currentTimeMillis();
+		private long currentMaxTimestamp = 0;
 		private long previousWatermark = -1;
 		
 	    @Override
 	    public long extractTimestamp(EventBean element, long previousElementTimestamp) {
 	        long timestamp = element.getTimestamp();
-	        System.out.println("Extract: " + element.getLabel() + " timestamp=" + Utils.getFormattedTimestamp(timestamp));
 	        currentMaxTimestamp = Math.max(timestamp, currentMaxTimestamp);
 	        return timestamp;
 	    }
@@ -153,29 +101,39 @@ public class TumblingEventTimeSideOutput {
 	   
 	}
 	
-	private static class EventBeanParser implements MapFunction<String,EventBean> {
+	// Generic Parameters: Input, Output, Key, Window
+	private static class MyProcessFunction extends ProcessWindowFunction<EventBean, ProcessedSumWindowEventTime, Tuple, TimeWindow> {
 		
-		public EventBean map(String input) throws Exception {
-			return parseData(input);
+		// Function Parameters: Key, Context, Input Elements, Output Collector
+		@Override
+		public void process(Tuple key,Context context,Iterable<EventBean> inputElements, Collector<ProcessedSumWindowEventTime> collector) throws Exception {		
+			System.out.println("PROCESSING WINDOW BEGIN=" + Utils.getFormattedTimestamp(context.window().getStart()));
+			ProcessedSumWindowEventTime processedSumWindow = new ProcessedSumWindowEventTime();
+			processedSumWindow.setWindowStart(context.window().getStart());
+			processedSumWindow.setWindowEnd(context.window().getEnd());
+			long computedSum = 0;
+			for (EventBean nextEvent : inputElements) {
+				processedSumWindow.getEvents().add(nextEvent);
+				computedSum += Long.valueOf(nextEvent.getValue());
+			}
+			processedSumWindow.setComputedSum(computedSum);
+			collector.collect(processedSumWindow);
+			System.out.println("PROCESSING WINDOW END=" + Utils.getFormattedTimestamp(context.window().getEnd()));
 		}
-		
-		private EventBean parseData(String input) {
-			String[] tokens = input.split(",");
-			String key = tokens[0];
-			String label = tokens[1];
-			String value = tokens[2];
-			long timestamp = Long.parseLong(tokens[3]);
-
+	}
+	
+	private static class EventBeanParser implements MapFunction<String,EventBean> {	
+		public EventBean map(String input) throws Exception {
+			String[] tokens = input.split(",");;
 			EventBean event = new EventBean();
-			event.setKey(key);
-			event.setLabel(label);
-			event.setValue(value);
-			event.setTimestamp(timestamp);
+			event.setKey(tokens[0]);
+			event.setLabel(tokens[1]);
+			event.setValue(tokens[2]);
+			event.setTimestamp(Long.parseLong(tokens[3]));
 			event.setProcessTime(System.currentTimeMillis());
-			
 			return event;
 		}
-		
 	}
+	
 	
 }

@@ -20,7 +20,7 @@ import com.dfheinz.flink.test.streams.SocketProducerServer;
 public class WatermarkTests {
 
 	private static Logger logger = Logger.getLogger(WatermarkTests.class);
-
+	private int boundary = 5;
 
 	@BeforeClass
 	public static void setupClass() throws Exception {
@@ -117,6 +117,7 @@ public class WatermarkTests {
 		String strategyClassName = EventProducerStrategy.class.getCanonicalName();
 		Map<String,String> parms = new HashMap<String,String>();
 		parms.put("filePath",fileName);
+		parms.put("boundary", "5");
 		SocketProducerServer server = new SocketProducerServer(strategyClassName, parms);
 		server.execute();		
 	}

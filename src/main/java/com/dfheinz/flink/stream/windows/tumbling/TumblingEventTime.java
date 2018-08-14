@@ -39,7 +39,7 @@ public class TumblingEventTime {
 		// Step 3: Perform Transformations and Operations
 		SingleOutputStreamOperator<ProcessedSumWindowEventTime> processedWindows = eventStream
 				.keyBy("key")
-				.window(TumblingEventTimeWindows.of(Time.seconds(2)))
+				.window(TumblingEventTimeWindows.of(Time.seconds(5)))
 				.process(new MyProcessFunction());
 		
 		// Step 4: Write to Sink(s)

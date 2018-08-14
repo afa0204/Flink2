@@ -17,17 +17,18 @@ public class EventReplayProducerStrategy extends SocketProducerStrategy {
 
 	private static Logger logger = Logger.getLogger(EventReplayProducerStrategy.class);
 	private List<EventMessage> eventMessages;
+	private String filePath;
 	
 	public EventReplayProducerStrategy(String filePath) throws Exception {
-		super(filePath);
+		this.filePath = filePath;
 	}
 	
 	protected  void createMessages() throws Exception {
 		BufferedReader reader = null;
 		logger.info("createMessages BEGIN");
-		InputStream is = getClass().getClassLoader().getResourceAsStream(getFilePath());
+		InputStream is = getClass().getClassLoader().getResourceAsStream(filePath);
 		if (is == null) {
-			throw new Exception("File Not Found: " + getFilePath());
+			throw new Exception("File Not Found: " + filePath);
 		}
 		
 		reader = new BufferedReader(new InputStreamReader(is));
@@ -50,7 +51,6 @@ public class EventReplayProducerStrategy extends SocketProducerStrategy {
 			eventMessage.setLabel(label);
 			eventMessage.setValue(value);
 			eventMessage.setTimestamp(timestamp);
-			// eventMessage.setEventTimeDelay(eventTimeDelay);
 			eventMessage.setProcessTimeDelay(processTimeDelay);
 			eventMessages.add(eventMessage);
 		}
@@ -62,11 +62,9 @@ public class EventReplayProducerStrategy extends SocketProducerStrategy {
 	
 	private void sendMessages() throws Exception {
 		logger.info("sendMessages BEGIN");
+		
 		// Send messages
 		for (EventMessage eventMessage : eventMessages) {
-			// double eventTimeDelay = eventMessage.getEventTimeDelay();
-			// sleep(eventTimeDelay);
-			// eventMessage.setTimestamp(getNow());
 			long processTimeDelay = (long)(eventMessage.getProcessTimeDelay()*1000);
 			if (processTimeDelay == 0) {
 				sendMessage(eventMessage.toMessage());

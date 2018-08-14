@@ -17,22 +17,28 @@ public class EventProducerStrategy extends SocketProducerStrategy {
 
 	private static Logger logger = Logger.getLogger(EventProducerStrategy.class);
 	private List<EventMessage> eventMessages;
+	private String filePath;
+	private long secondBoundary = 5;
+	private long secondBoundaryMilli = secondBoundary * 1000L;
 	
 	public EventProducerStrategy(String filePath) throws Exception {
-		super(filePath);
+		this.filePath = filePath;
 	}
 	
 	protected  void createMessages() throws Exception {
 		BufferedReader reader = null;
 		logger.info("createMessages BEGIN");
-		InputStream is = getClass().getClassLoader().getResourceAsStream(getFilePath());
+		InputStream is = getClass().getClassLoader().getResourceAsStream(filePath);
 		if (is == null) {
-			throw new Exception("File Not Found: " + getFilePath());
+			throw new Exception("File Not Found: " + filePath);
 		}
-		
 		reader = new BufferedReader(new InputStreamReader(is));
-		String line = null;
 		eventMessages = new ArrayList<>();
+		
+		// long eventTime = System.currentTimeMillis();
+		long startTime = System.currentTimeMillis();
+		long eventTime = (((startTime-secondBoundaryMilli)/secondBoundaryMilli)*secondBoundaryMilli) + secondBoundaryMilli;
+		String line = null;
 		while ((line=reader.readLine()) != null) {
 			if (line.startsWith("#") || Utils.isBlank(line.trim())) {
 				continue;
@@ -43,13 +49,13 @@ public class EventProducerStrategy extends SocketProducerStrategy {
 			String label = tokens[1];
 			String value = tokens[2];
 			double eventTimeDelay = Double.parseDouble(tokens[3]);
+			eventTime += (long)(eventTimeDelay*1000);
 			double processTimeDelay = Double.parseDouble(tokens[4]);
-			
 			EventMessage eventMessage = new EventMessage();
 			eventMessage.setKey(key);
 			eventMessage.setLabel(label);
 			eventMessage.setValue(value);
-			eventMessage.setEventTimeDelay(eventTimeDelay);
+			eventMessage.setTimestamp(eventTime);
 			eventMessage.setProcessTimeDelay(processTimeDelay);
 			eventMessages.add(eventMessage);
 		}
@@ -63,9 +69,9 @@ public class EventProducerStrategy extends SocketProducerStrategy {
 		logger.info("sendMessages BEGIN");
 		// Send messages
 		for (EventMessage eventMessage : eventMessages) {
-			double eventTimeDelay = eventMessage.getEventTimeDelay();
-			sleep(eventTimeDelay);
-			eventMessage.setTimestamp(getNow());
+			// double eventTimeDelay = eventMessage.getEventTimeDelay();
+			// sleep(eventTimeDelay);
+			// eventMessage.setTimestamp(getNow());
 			long processTimeDelay = (long)(eventMessage.getProcessTimeDelay()*1000);
 			if (processTimeDelay == 0) {
 				sendMessage(eventMessage.toMessage());

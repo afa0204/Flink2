@@ -14,6 +14,15 @@ public class Utils {
 		return calendar.getTime();
 	}
 	
+	public static long getTimestamp(String timestampValue) {
+		try {
+			return dateFormatter.parse(timestampValue).getTime();
+		} catch (Exception e) {
+			System.out.println("Unable to parse Date=" + timestampValue);
+			return 0;
+		}
+	}
+	
 	public static String getFormattedTimestamp(long timestamp) {
 		return dateFormatter.format(getDate(timestamp));
 	}

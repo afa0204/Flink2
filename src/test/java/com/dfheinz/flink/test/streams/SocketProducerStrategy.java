@@ -14,11 +14,13 @@ public abstract class SocketProducerStrategy implements ProducerStrategy {
 	
 	private static Logger logger = Logger.getLogger(SocketProducerStrategy.class);
 	private PrintWriter socketWriter;
-	private String filePath;
+	// private String filePath;
 	
-	public SocketProducerStrategy(String filePath) throws Exception {
-		this.filePath = filePath;
-	}
+//	public SocketProducerStrategy(String filePath) throws Exception {
+//		this.filePath = filePath;
+//	}
+	
+	
 	
 	public void execute() throws Exception {
 		createMessages();
@@ -43,11 +45,6 @@ public abstract class SocketProducerStrategy implements ProducerStrategy {
 		socketWriter.flush();
 	}
 	
-	protected void sendMessage(String msg, double delay) {
-		sleep(delay);
-		socketWriter.println(msg);
-		socketWriter.flush();
-	}
 	
 	public void shutdown() {
 		socketWriter.close();
@@ -70,9 +67,9 @@ public abstract class SocketProducerStrategy implements ProducerStrategy {
 		this.socketWriter = socketWriter;
 	}
 	
-	protected String getFilePath() {
-		return filePath;
-	}
+//	protected String getFilePath() {
+//		return filePath;
+//	}
 	
 	protected void close(Reader reader) {
 		try {

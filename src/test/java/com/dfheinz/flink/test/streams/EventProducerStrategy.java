@@ -18,7 +18,7 @@ public class EventProducerStrategy extends SocketProducerStrategy {
 	private static Logger logger = Logger.getLogger(EventProducerStrategy.class);
 	private List<EventMessage> eventMessages;
 	private String filePath;
-	private long secondBoundary = 5;
+	private long secondBoundary = 2;
 	private long secondBoundaryMilli = secondBoundary * 1000L;
 	
 	public EventProducerStrategy(String filePath) throws Exception {
@@ -56,6 +56,7 @@ public class EventProducerStrategy extends SocketProducerStrategy {
 			eventMessage.setLabel(label);
 			eventMessage.setValue(value);
 			eventMessage.setTimestamp(eventTime);
+			eventMessage.setEventTimeDelay(eventTimeDelay);
 			eventMessage.setProcessTimeDelay(processTimeDelay);
 			eventMessages.add(eventMessage);
 		}
@@ -69,9 +70,8 @@ public class EventProducerStrategy extends SocketProducerStrategy {
 		logger.info("sendMessages BEGIN");
 		// Send messages
 		for (EventMessage eventMessage : eventMessages) {
-			// double eventTimeDelay = eventMessage.getEventTimeDelay();
-			// sleep(eventTimeDelay);
-			// eventMessage.setTimestamp(getNow());
+			double eventTimeDelay = eventMessage.getEventTimeDelay();
+			sleep(eventTimeDelay);
 			long processTimeDelay = (long)(eventMessage.getProcessTimeDelay()*1000);
 			if (processTimeDelay == 0) {
 				sendMessage(eventMessage.toMessage());

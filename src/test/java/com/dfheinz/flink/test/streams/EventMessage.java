@@ -10,12 +10,20 @@ public class EventMessage {
 	private String value;
 	private double eventTimeDelay;
 	private double processTimeDelay;
+	private long processOrder;
 	
+	
+//	public String toString() {
+//		String line = String.format("%s %s %s %.2f %.2f",key,label,value,eventTimeDelay,processTimeDelay);
+//		return line;
+//	}
 	
 	public String toString() {
-		String line = String.format("%s %s %s %.2f %.2f",key,label,value,eventTimeDelay,processTimeDelay);
+		String line = String.format("%s %s %s %s %d",key,label,value,Utils.getFormattedTimestamp(timestamp),processOrder);
 		return line;
 	}
+	
+	
 	public String toMessage() {
 		// String line = String.format("%s,%s,%s,%d,%s,%s",key,label,value,timestamp,Utils.getFormattedTimestamp(timestamp),Utils.getFormattedNow());
 		String line = String.format("%s,%s,%s,%d,%s",key,label,value,timestamp,Utils.getFormattedTimestamp(timestamp));
@@ -61,6 +69,15 @@ public class EventMessage {
 
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
+	}
+
+
+	public long getProcessOrder() {
+		return processOrder;
+	}
+
+	public void setProcessOrder(long processOrder) {
+		this.processOrder = processOrder;
 	}
 	
 	

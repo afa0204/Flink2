@@ -40,7 +40,6 @@ public abstract class SocketProducerStrategy implements ProducerStrategy {
 	}
 	
 	protected void sendMessage(String msg) {
-		System.out.println(msg);
 		socketWriter.println(msg);
 		socketWriter.flush();
 	}

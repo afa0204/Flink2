@@ -46,20 +46,9 @@ public class WatermarkTests {
 	
 	@Test
 	@Ignore
-	public void testStreamingEventTimeLate() {
+	public void testStreamingEventTimeLate5() {
 		try {
-			String fileName = "input/event_time_late.txt";
-			runEventSocketProducer(fileName);
-		} catch (Exception e) {
-			logger.error("ERROR", e);
-		}		
-	}
-	
-	@Test
-	@Ignore
-	public void testStreamingEventTimeLate2() {
-		try {
-			String fileName = "input/event_time_late2.txt";
+			String fileName = "input/event_time_late_window5.txt";
 			runEventSocketProducer(fileName);
 		} catch (Exception e) {
 			logger.error("ERROR", e);
@@ -68,6 +57,17 @@ public class WatermarkTests {
 	
 	@Test
 	// @Ignore
+	public void testStreamingEventTimeLate2() {
+		try {
+			String fileName = "input/event_time_late_window2.txt";
+			runEventSocketProducer(fileName);
+		} catch (Exception e) {
+			logger.error("ERROR", e);
+		}		
+	}
+	
+	@Test
+	@Ignore
 	public void testStreamingEventTimeIdeal() {
 		try {
 			String fileName = "input/event_time_ideal.txt";

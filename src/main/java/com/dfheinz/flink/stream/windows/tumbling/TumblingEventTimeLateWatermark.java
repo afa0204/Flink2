@@ -102,7 +102,7 @@ public class TumblingEventTimeLateWatermark {
 	}
 	
 	private static class EventBeanTimestampAssigner implements AssignerWithPeriodicWatermarks<EventBean> {	
-		private final long MAX_LATENESS=8;
+		private final long MAX_LATENESS=0;
 		private final long WATERMARK_ADJUSTMENT = MAX_LATENESS*1000;
 					
 		private long currentMaxTimestamp = 0;
@@ -122,7 +122,7 @@ public class TumblingEventTimeLateWatermark {
 	    	if (currentMaxTimestamp != previousWatermark) {
 	    		previousWatermark = currentMaxTimestamp;
 	    		System.out.println("Adjusted Watermark=" + Utils.getFormattedTimestamp(watermark));
-	    	}
+	    	} 
 	    	return new Watermark(watermark);
 	    }
 	   

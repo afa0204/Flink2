@@ -14,7 +14,7 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class SelectPetSpecies {
+public class SelectPetsAgeGreaterThan10 {
 
 	public static void main(String[] args) throws Exception {
 		
@@ -26,7 +26,7 @@ public class SelectPetSpecies {
 			ParameterTool parms = ParameterTool.fromArgs(args);
 			env.getConfig().setGlobalJobParameters(parms);
 			String input = "input/batch/pets.csv";
-			String output = "output/selected_pets_table.csv";
+			String output = "output/select_pets_age_gt_10.csv";
 			
 			// Get Source
 			CsvTableSource petsTableSource = CsvTableSource.builder()
@@ -53,9 +53,8 @@ public class SelectPetSpecies {
 			// WHERE species != 'bear'
 			// GROUP BY species
 			Table counts = pets
-			        .groupBy("species")
-			        .select("species, species.count as count")
-			        .filter("species !== 'bear'");
+			        .select("id,species,color,weight,name,age")
+			        .filter("age > 10");
 			
 			// Write Results to File
 			int parallelism = 1;

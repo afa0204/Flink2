@@ -35,8 +35,9 @@ public class SocketProducerServer {
 				
 				// Create Strategy
 				String filePath = strategyParms.get("filePath");
-				Constructor constructor = Class.forName(strategyClassName).getConstructor(java.lang.String.class);
-				SocketProducerStrategy strategy = (SocketProducerStrategy)constructor.newInstance(filePath);
+				int windowSize = Integer.valueOf(strategyParms.get("windowSize"));
+				Constructor constructor = Class.forName(strategyClassName).getConstructor(java.lang.String.class,int.class);
+				SocketProducerStrategy strategy = (SocketProducerStrategy)constructor.newInstance(filePath, windowSize);
 				PrintWriter socketOutput = new PrintWriter(clientSocket.getOutputStream(), true);
 				BufferedReader socketInput = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 				strategy.setSocketWriter(socketOutput);
@@ -46,7 +47,7 @@ public class SocketProducerServer {
 				producer.start();					
 			}	
 		} catch (Exception e) {
-			logger.info("SocketProducerServer Shutdown");
+			logger.info("SocketProducerServer ERROR", e);
 		}
 	}
 

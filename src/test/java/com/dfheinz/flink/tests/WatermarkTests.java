@@ -20,7 +20,6 @@ import com.dfheinz.flink.test.streams.SocketProducerServer;
 public class WatermarkTests {
 
 	private static Logger logger = Logger.getLogger(WatermarkTests.class);
-	private int boundary = 5;
 
 	@BeforeClass
 	public static void setupClass() throws Exception {
@@ -49,7 +48,20 @@ public class WatermarkTests {
 	public void testStreamingEventTimeLate5() {
 		try {
 			String fileName = "input/event_time_late_window5.txt";
-			runEventSocketProducer(fileName);
+			int windowSize = 5;
+			runEventSocketProducer(fileName, windowSize);
+		} catch (Exception e) {
+			logger.error("ERROR", e);
+		}		
+	}
+	
+	@Test
+	@Ignore
+	public void testStreamingEventTimeIdeal2() {
+		try {
+			String fileName = "input/event_time_ideal_window2.txt";
+			int windowSize = 2;
+			runEventSocketProducer(fileName, windowSize);
 		} catch (Exception e) {
 			logger.error("ERROR", e);
 		}		
@@ -60,7 +72,8 @@ public class WatermarkTests {
 	public void testStreamingEventTimeLate2() {
 		try {
 			String fileName = "input/event_time_late_window2.txt";
-			runEventSocketProducer(fileName);
+			int windowSize = 2;
+			runEventSocketProducer(fileName, windowSize);
 		} catch (Exception e) {
 			logger.error("ERROR", e);
 		}		
@@ -71,22 +84,13 @@ public class WatermarkTests {
 	public void testStreamingEventTimeIdeal() {
 		try {
 			String fileName = "input/event_time_ideal.txt";
-			runEventSocketProducer(fileName);
+			int windowSize = 2;
+			runEventSocketProducer(fileName, windowSize);
 		} catch (Exception e) {
 			logger.error("ERROR", e);
 		}		
 	}
 	
-	@Test
-	@Ignore
-	public void testStreaming102() {
-		try {
-			String fileName = "input/streaming102.txt";
-			runEventSocketProducer(fileName);
-		} catch (Exception e) {
-			logger.error("ERROR", e);
-		}		
-	}
 	
 	@Test
 	@Ignore
@@ -94,7 +98,8 @@ public class WatermarkTests {
 		try {
 			System.out.println("testStreaming131316");
 			String fileName = "input/streaming131316.txt";
-			runEventSocketProducer(fileName);
+			int windowSize = 5;
+			runEventSocketProducer(fileName, windowSize);
 		} catch (Exception e) {
 			logger.error("ERROR", e);
 		}		
@@ -106,18 +111,19 @@ public class WatermarkTests {
 		try {
 			System.out.println("testStreaming131916");
 			String fileName = "input/streaming131916.txt";
-			runEventSocketProducer(fileName);
+			int windowSize = 5;
+			runEventSocketProducer(fileName, windowSize);
 		} catch (Exception e) {
 			logger.error("ERROR", e);
 		}		
 	}
 	
 
-	private void runEventSocketProducer(String fileName) throws Exception {
+	private void runEventSocketProducer(String fileName, int windowSize) throws Exception {
 		String strategyClassName = EventProducerStrategy.class.getCanonicalName();
 		Map<String,String> parms = new HashMap<String,String>();
 		parms.put("filePath",fileName);
-		parms.put("boundary", "5");
+		parms.put("windowSize", String.valueOf(windowSize));
 		SocketProducerServer server = new SocketProducerServer(strategyClassName, parms);
 		server.execute();		
 	}

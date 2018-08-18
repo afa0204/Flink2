@@ -18,11 +18,17 @@ public class EventProducerStrategy extends SocketProducerStrategy {
 	private static Logger logger = Logger.getLogger(EventProducerStrategy.class);
 	private List<EventMessage> eventMessages;
 	private String filePath;
-	private long secondBoundary = 2;
-	private long secondBoundaryMilli = secondBoundary * 1000L;
+	private int windowSize;
+//	private long secondBoundary = 2;
+//	private long secondBoundaryMilli = secondBoundary * 1000L;
+	private long secondBoundary = 0;
+	private long secondBoundaryMilli = 0;
 	
-	public EventProducerStrategy(String filePath) throws Exception {
+	
+	public EventProducerStrategy(String filePath, int windowSize) throws Exception {
 		this.filePath = filePath;
+		this.secondBoundary = windowSize;
+		this.secondBoundaryMilli = secondBoundary * 1000L;
 	}
 	
 	protected  void createMessages() throws Exception {

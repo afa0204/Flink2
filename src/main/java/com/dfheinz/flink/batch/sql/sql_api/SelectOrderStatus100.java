@@ -1,4 +1,4 @@
-package com.dfheinz.flink.batch.sql.table_api;
+package com.dfheinz.flink.batch.sql.sql_api;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -14,7 +14,7 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class SelectAllOrders {
+public class SelectOrderStatus100 {
 	
 	public static void main(String[] args) throws Exception {
 		try {
@@ -44,15 +44,15 @@ public class SelectAllOrders {
 			// Step 4: Perform Operations
 			// SELECT *
 			// FROM orders
-			Table allOrders = orderTable
-				.select("id,order_date,amount,customer_id");
+			Table orderStatus100 = tableEnv.sqlQuery(
+				"SELECT id,order_date,amount,status,customer_id FROM orders WHERE status = 100");
 								
 			// Step 5: Write Results to Sink
-			TableSink<Row> sink = new CsvTableSink("output/select_all_orders.csv", ",", parallelism, WriteMode.OVERWRITE);
-			allOrders.writeToSink(sink);
+			TableSink<Row> sink = new CsvTableSink("output/select_orders_status100.csv", ",", parallelism, WriteMode.OVERWRITE);
+			orderStatus100.writeToSink(sink);
 					
 			// Step 6: Trigger Application Execution
-			JobExecutionResult result  =  env.execute("SelectAllOrders");
+			JobExecutionResult result  =  env.execute("SelectOrderStatus100");
 		
 		} catch (Exception e) {
 			System.out.println("ERROR:\n" + e);

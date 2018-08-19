@@ -1,6 +1,7 @@
-package com.dfheinz.flink.batch.sql.sqlapi;
+package com.dfheinz.flink.batch.sql.table_api;
 
 import org.apache.flink.api.common.JobExecutionResult;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
@@ -13,18 +14,17 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class SelectAllOrders {
-
+public class SelectOrderStatus100 {
+	
 	public static void main(String[] args) throws Exception {
-		
-		try {	
+		try {
 			// Step 1: Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+			BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env);
 			int parallelism = 1;
-			BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env); 
 			ParameterTool parms = ParameterTool.fromArgs(args);
 			env.getConfig().setGlobalJobParameters(parms);
-			
+						
 			// Step 2: Get Table Source
 			CsvTableSource orderTableSource = CsvTableSource.builder()
 					.path("input/batch/orders.csv")
@@ -33,30 +33,30 @@ public class SelectAllOrders {
 				    .field("id", Types.LONG())
 				    .field("order_date", Types.SQL_DATE())
 				    .field("amount", Types.DECIMAL())
+				    .field("status", Types.LONG())
 				    .field("customer_id", Types.LONG())
-				    .build();
+				    .build();		
 			
 			// Step 3: Register our table source
 			tableEnv.registerTableSource("orders", orderTableSource);
-		
-			// Step 4: Perform Operations
-			// SELECT id, order_date, amount, customer_id
-			// FROM orders
-			Table allOrders = tableEnv.sqlQuery(
-				"SELECT id, order_date, amount, customer_id FROM orders ORDER BY id");
+			Table orderTable = tableEnv.scan("orders");
 			
+			// Step 4: Perform Operations
+			// SELECT *
+			// FROM orders
+			Table orderStatus100 = orderTable
+				.select("id,order_date,amount,status,customer_id")
+				.filter("status = 100");
+								
 			// Step 5: Write Results to Sink
-			TableSink<Row> sink = new CsvTableSink("output/select_all_orders_api_sql.csv", ",", parallelism, WriteMode.OVERWRITE);
-			allOrders.writeToSink(sink);
-							
-			// Execute
-			JobExecutionResult result  =  env.execute("SelectAllOrders");
+			TableSink<Row> sink = new CsvTableSink("output/select_orders_status100.csv", ",", parallelism, WriteMode.OVERWRITE);
+			orderStatus100.writeToSink(sink);
+					
+			// Step 6: Trigger Application Execution
+			JobExecutionResult result  =  env.execute("SelectOrderStatus100");
 		
 		} catch (Exception e) {
 			System.out.println("ERROR:\n" + e);
 		}
 	}
-	
-	
-	
 }

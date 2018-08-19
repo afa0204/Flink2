@@ -1,4 +1,4 @@
-package com.dfheinz.flink.batch.sql.sqlapi;
+package com.dfheinz.flink.batch.sql.table_api;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.DataSet;
@@ -14,12 +14,12 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class LeftOuterJoin {
+public class IntersectCustomers {
 
 	public static void main(String[] args) throws Exception {
 		
 		try {
-			System.out.println("LeftOuterJoin BEGIN");
+			System.out.println("InnerJoin BEGIN");
 	
 			// Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
@@ -29,11 +29,11 @@ public class LeftOuterJoin {
 			env.getConfig().setGlobalJobParameters(parms);
 			
 			
-			// Get Customers
-			String customersPath = "input/customers.csv";
-			// id,first_name,last_name,email,address,city,state,zip
-			CsvTableSource customersTableSource = CsvTableSource.builder()
-				    .path(customersPath)
+			// Customer Set 1
+			// Register our table source
+			String customersPath1 = "input/customerset1.csv";
+			CsvTableSource customerSet1Source = CsvTableSource.builder()
+				    .path(customersPath1)
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
 				    .field("customer_id", Types.INT())
@@ -45,47 +45,47 @@ public class LeftOuterJoin {
 				    .field("state", Types.STRING())
 				    .field("zip", Types.STRING())
 				    .build();
+			tableEnv.registerTableSource("customerset1", customerSet1Source);
+			Table customerset1 = tableEnv.scan("customerset1");
+			
+			
+			// Customer Set 2
 			// Register our table source
-			tableEnv.registerTableSource("customers", customersTableSource);
-			Table customers = tableEnv.scan("customers");
-					
-			// Get Orders
-			String ordersPath = "input/orders.csv";
-			// order_id,order_date,amount,customer_id
-			CsvTableSource ordersTableSource = CsvTableSource.builder()
-				    .path(ordersPath)
+			String customersPath2 = "input/customerset2.csv";
+			CsvTableSource customerSet2Source = CsvTableSource.builder()
+				    .path(customersPath2)
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
-				    .field("order_id", Types.INT())
-				    .field("order_date", Types.SQL_DATE())
-				    .field("amount", Types.DECIMAL())
-				    .field("customer_key", Types.INT())
-				    .build();			
-			
-			// Register our table source
-			tableEnv.registerTableSource("orders", ordersTableSource);
-			Table orders = tableEnv.scan("orders");
-	
-			// Perform Join
-			String queryString = 
-					"SELECT first_name,last_name,order_date,amount " +
-					"FROM customers LEFT JOIN orders " +
-					"ON customers.customer_id=orders.customer_key";		
-			Table leftOuterJoin = tableEnv.sqlQuery(queryString);
+				    .field("customer_id", Types.INT())
+				    .field("first_name", Types.STRING())
+				    .field("last_name", Types.STRING())
+				    .field("email", Types.STRING())
+				    .field("address", Types.STRING())
+				    .field("city", Types.STRING())
+				    .field("state", Types.STRING())
+				    .field("zip", Types.STRING())
+				    .build();
+			tableEnv.registerTableSource("customerset2", customerSet2Source);
+			Table customerset2 = tableEnv.scan("customerset2");
+					
+			// Perform Intersection
+			Table commonCustomers = customerset1.intersect(customerset2);
 			
 			
 			// Write to Sinks
 			int parallelism = 1;
-			leftOuterJoin.printSchema();
-			DataSet<Row> result = tableEnv.toDataSet(leftOuterJoin, Row.class);
+			
+			// Write to Sinks
+			commonCustomers.printSchema();
+			DataSet<Row> result = tableEnv.toDataSet(commonCustomers, Row.class);
 			result.print();
 			
-			TableSink<Row> joinSink = new CsvTableSink("output/leftouterjoinsql.csv", ",", parallelism, WriteMode.OVERWRITE);
-			leftOuterJoin.writeToSink(joinSink);
+			TableSink<Row> allSink = new CsvTableSink("output/intersect_customers.csv", ",", parallelism, WriteMode.OVERWRITE);
+			commonCustomers.writeToSink(allSink);
 				
 					
 			// Execute
-			JobExecutionResult jobResult  =  env.execute("LeftOuterJoin");
+			JobExecutionResult jobResult  =  env.execute("Union");
 
 		
 		} catch (Exception e) {

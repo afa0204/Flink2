@@ -67,7 +67,7 @@ public class InnerJoin {
 			Table orders = tableEnv.scan("orders");
 	
 			// Perform Join
-			Table innerJoin = orders.join(customers).where("customer_key=customer_id").select("last_name,order_date,amount");
+			Table innerJoin = orders.join(customers).where("customer_key = customer_id").select("last_name,order_date,amount");
 		
 			// Write to Sinks
 			int parallelism = 1;

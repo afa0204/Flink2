@@ -22,18 +22,7 @@ public class ProcessedSumWindow {
 		}
 		return buffer.toString();
 	}	
-	
-//	public String toString() {
-//		StringBuffer buffer = new StringBuffer();
-//		buffer.append("WindowStart=" + getTS(windowStart));
-//		for (EventBean eventBean : events) {
-//			buffer.append("\nEvent=" + eventBean.getLabel() + " Value=" + eventBean.getValue());
-//		}
-//		buffer.append("\ncomputedSum=" + computedSum);
-//		buffer.append("\nWindowEnd=" + getTS(windowEnd) + "\n");
-//		return buffer.toString();
-//	}	
-	
+
 	
 	private String getTS(long timestamp) {
 		return Utils.getFormattedTimestamp(timestamp);

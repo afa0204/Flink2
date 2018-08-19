@@ -1,30 +1,8 @@
-id,species,color,weight,name,age
-311,canine,golden,75,Dog1,3
-312,canine,golden,82,Dog2,8
-313,canine,golden,91,Dog3,4
-314,canine,golden,87,Dog4,1
-315,canine,golden,71,Dog5,12
-316,canine,golden,76,Dog6,10
-928,feline,grey,8,Cat1,14
-929,feline,grey,9,Cat2,11
-930,feline,grey,9,Cat3,3
-931,feline,grey,8,Cat4,2
-932,feline,grey,9,Cat6,7
-933,feline,grey,10,Cat7,9
-934,feline,grey,14,Cat8,3
-935,feline,grey,7,Cat9,4
-936,feline,grey,7,Cat10,4
-44,avian,green,1,Caique1,12
-45,avian,green,2,Caique2,22
-46,avian,green,2,Caique3,19
-47,avian,green,2,Caique4,4
-48,avian,green,2,Caique5,8
-49,avian,green,2,Caique6,2
-50,avian,green,1,Caique7,9
-11,avian,yellow,1,Conure1,17
-12,avian,yellow,1,Conure2,17
-13,avian,yellow,1,Conure3,14
-14,avian,yellow,1,Conure4,24
-15,avian,yellow,1,Conure5,20
-16,avian,yellow,2,Conure6,3
-17,avian,yellow,1,Conure7,8
+id,species,breed,dob,name,weight
+311,canine,golden retriever,2008-03-30,Captain,75.00
+312,feline,american shorthair,2008-05-12,Oscar,8.00
+313,avian,sun conure,2011-10-19,Darwin,0.50
+314,feline,birman,2018-10-19,Snowball,12.00
+315,canine,labrador retriever,2006-02-19,Dakota,82.00
+316,feline,american shorthair,1992-04-12,Ripley,12.00
+317,feline,american shorthair,1992-10-12,Boots,11.00

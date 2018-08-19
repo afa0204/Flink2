@@ -7,9 +7,8 @@ import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
+import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
-import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
@@ -20,7 +19,7 @@ import com.dfheinz.flink.beans.ProcessedSumWindow;
 import com.dfheinz.flink.utils.Utils;
 
 
-public class TumblingEventTime {
+public class TumblingEventTimeBoundedOutOfOrder6 {
 	
 	public static void main(String[] args) throws Exception {
 		
@@ -35,7 +34,7 @@ public class TumblingEventTime {
 		DataStream<EventBean> eventStream = env
 				.socketTextStream(host, port)
 				.map(new EventBeanParser())
-				.assignTimestampsAndWatermarks(new EventBeanTimestampAndWatermarkAssigner());
+				.assignTimestampsAndWatermarks(new MyBoundedOutOfOrderTimestampExtractor(Time.seconds(6)));
 		
 		// Step 3: Perform Transformations and Operations
 		SingleOutputStreamOperator<ProcessedSumWindow> processedWindows = eventStream
@@ -47,27 +46,20 @@ public class TumblingEventTime {
 		processedWindows.writeAsText("output/tumbling_event_time.txt",FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 		
 		// Step 5: Trigger Execution
-		env.execute("TumblingEventTime");		
+		env.execute("TumblingEventTimeBoundedOutOfOrder6");
+		
 	}
 	
 
+	private static class MyBoundedOutOfOrderTimestampExtractor extends BoundedOutOfOrdernessTimestampExtractor<EventBean> {
+		public MyBoundedOutOfOrderTimestampExtractor(Time maxOutOfOrderness) {
+			super(maxOutOfOrderness);
+		}
 
-	
-	private static class EventBeanTimestampAndWatermarkAssigner implements AssignerWithPeriodicWatermarks<EventBean> {	
-		private long currentMaxTimestamp = 0;
-		
-	    @Override
-	    public long extractTimestamp(EventBean element, long previousElementTimestamp) {
-	        long timestamp = element.getTimestamp();
-	        currentMaxTimestamp = Math.max(timestamp, currentMaxTimestamp);
-	        return timestamp;
-	    }
-
-	    @Override
-	    public Watermark getCurrentWatermark() {
-	    	return new Watermark(currentMaxTimestamp);
-	    }
-	   
+		@Override
+		public long extractTimestamp(EventBean element) {
+			return element.getTimestamp();
+		}
 	}
 	
 	private static class EventBeanParser implements MapFunction<String,EventBean> {	

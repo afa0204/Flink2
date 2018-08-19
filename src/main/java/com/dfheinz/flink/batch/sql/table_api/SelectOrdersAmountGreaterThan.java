@@ -1,0 +1,68 @@
+package com.dfheinz.flink.batch.sql.table_api;
+
+import org.apache.flink.api.common.JobExecutionResult;
+import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.core.fs.FileSystem.WriteMode;
+import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.api.Types;
+import org.apache.flink.table.api.java.BatchTableEnvironment;
+import org.apache.flink.table.sinks.CsvTableSink;
+import org.apache.flink.table.sinks.TableSink;
+import org.apache.flink.table.sources.CsvTableSource;
+import org.apache.flink.types.Row;
+
+public class SelectOrdersAmountGreaterThan {
+
+	public static void main(String[] args) throws Exception {
+		
+		try {
+	
+			// Get Execution Environment
+			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+			BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env); 
+			ParameterTool parms = ParameterTool.fromArgs(args);
+			env.getConfig().setGlobalJobParameters(parms);
+			String input = "input/batch/orders.csv";
+			
+			// Get Source
+			CsvTableSource orderTableSource = CsvTableSource.builder()
+				    .path(input)
+				    .ignoreFirstLine()
+				    .fieldDelimiter(",")
+				    .field("id", Types.INT())
+				    .field("order_date", Types.SQL_DATE())
+				    .field("amount", Types.DECIMAL())
+				    .field("customer_id", Types.LONG())
+				    .build();
+			
+			
+			// Register our table source
+			tableEnv.registerTableSource("orders", orderTableSource);
+			Table orderTable = tableEnv.scan("orders");
+
+			
+			// Perform Operations
+			// SELECT *
+			// FROM orders
+			// WHERE amount > 35.00
+			Table result = orderTable
+				.select("id, order_date, amount, customer_id")
+				.filter("amount > 35.00");
+			
+			// Write Results to File
+			int parallelism = 1;
+			TableSink<Row> sink = new CsvTableSink("output/select_all_orders_amount_greater_than35.csv", ",", parallelism, WriteMode.OVERWRITE);
+			result.writeToSink(sink);
+						
+			// Execute
+			JobExecutionResult jobResult  =  env.execute("SelectOrders");
+
+		
+		} catch (Exception e) {
+			System.out.println("ERROR:\n" + e);
+		}
+	}
+	
+}

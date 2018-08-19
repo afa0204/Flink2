@@ -20,7 +20,7 @@ import com.dfheinz.flink.beans.ProcessedSumWindow;
 import com.dfheinz.flink.utils.Utils;
 
 
-public class TumblingEventTime {
+public class TumblingEventTimeCustomWatermarkAdjust6 {
 	
 	public static void main(String[] args) throws Exception {
 		
@@ -35,7 +35,7 @@ public class TumblingEventTime {
 		DataStream<EventBean> eventStream = env
 				.socketTextStream(host, port)
 				.map(new EventBeanParser())
-				.assignTimestampsAndWatermarks(new EventBeanTimestampAndWatermarkAssigner());
+				.assignTimestampsAndWatermarks(new EventBeanTimestampAssignerWithRetractedWatermark(Time.seconds(6)));
 		
 		// Step 3: Perform Transformations and Operations
 		SingleOutputStreamOperator<ProcessedSumWindow> processedWindows = eventStream
@@ -47,25 +47,41 @@ public class TumblingEventTime {
 		processedWindows.writeAsText("output/tumbling_event_time.txt",FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 		
 		// Step 5: Trigger Execution
-		env.execute("TumblingEventTime");		
+		env.execute("TumblingEventTimeCustomWatermarkAdjust6");		
 	}
 	
 
 
 	
-	private static class EventBeanTimestampAndWatermarkAssigner implements AssignerWithPeriodicWatermarks<EventBean> {	
+	private static class EventBeanTimestampAssignerWithRetractedWatermark implements AssignerWithPeriodicWatermarks<EventBean> {	
+		private long retractAmount = 0;
 		private long currentMaxTimestamp = 0;
+		private long previousWatermark = -1;
+		
+		public EventBeanTimestampAssignerWithRetractedWatermark(Time maxLateness) {
+			retractAmount = maxLateness.toMilliseconds();
+		}
 		
 	    @Override
 	    public long extractTimestamp(EventBean element, long previousElementTimestamp) {
 	        long timestamp = element.getTimestamp();
+	        System.out.println("Event: " + element.getLabel() + " timestamp=" + Utils.getFormattedTimestamp(timestamp));
 	        currentMaxTimestamp = Math.max(timestamp, currentMaxTimestamp);
 	        return timestamp;
 	    }
 
 	    @Override
 	    public Watermark getCurrentWatermark() {
-	    	return new Watermark(currentMaxTimestamp);
+	    	
+	    	// Retract the watermark.
+	    	long watermark = currentMaxTimestamp - retractAmount;
+	    	
+	    	// Output watermark if it has changed
+	    	if (currentMaxTimestamp != previousWatermark) {
+	    		previousWatermark = currentMaxTimestamp;
+	    		System.out.println("Adjusted Watermark=" + Utils.getFormattedTimestamp(watermark));
+	    	} 
+	    	return new Watermark(watermark);
 	    }
 	   
 	}

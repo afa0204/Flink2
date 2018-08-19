@@ -43,17 +43,6 @@ public class WatermarkTests {
 		logger.info("Dummy Test Begin");
 	}
 	
-	@Test
-	@Ignore
-	public void testStreamingEventTimeLate5() {
-		try {
-			String fileName = "input/event_time_late_window5.txt";
-			int windowSize = 5;
-			runEventSocketProducer(fileName, windowSize);
-		} catch (Exception e) {
-			logger.error("ERROR", e);
-		}		
-	}
 	
 	@Test
 	@Ignore
@@ -78,19 +67,7 @@ public class WatermarkTests {
 			logger.error("ERROR", e);
 		}		
 	}
-	
-	@Test
-	@Ignore
-	public void testStreamingEventTimeIdeal() {
-		try {
-			String fileName = "input/event_time_ideal.txt";
-			int windowSize = 2;
-			runEventSocketProducer(fileName, windowSize);
-		} catch (Exception e) {
-			logger.error("ERROR", e);
-		}		
-	}
-	
+		
 	
 	@Test
 	@Ignore

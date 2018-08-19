@@ -1,4 +1,4 @@
-package com.dfheinz.flink.batch.sql.sqlapi;
+package com.dfheinz.flink.batch.sql.sql_api;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.DataSet;

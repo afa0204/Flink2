@@ -1,5 +1,6 @@
 package com.dfheinz.flink.stream.windows.tumbling;
 
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.core.fs.FileSystem;
@@ -8,20 +9,24 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
+import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 
 import com.dfheinz.flink.beans.EventBean;
 import com.dfheinz.flink.beans.ProcessedSumWindow;
 import com.dfheinz.flink.utils.Utils;
 
 
-public class TumblingEventTime {
+public class TumblingEventTimeAllowedLateness {
 	
+	private static final OutputTag<EventBean> lateEventsTag = new OutputTag<EventBean>("late-events") {};
+
 	public static void main(String[] args) throws Exception {
 		
 		// Step 1: Get Execution Environment
@@ -30,46 +35,43 @@ public class TumblingEventTime {
 		env.setParallelism(1);
 		String host = "localhost";
 		int port = 9999;
+
 		
 		// Step 2: Get Data
 		DataStream<EventBean> eventStream = env
 				.socketTextStream(host, port)
 				.map(new EventBeanParser())
-				.assignTimestampsAndWatermarks(new EventBeanTimestampAndWatermarkAssigner());
+				.assignTimestampsAndWatermarks(new MyBoundedOutOfOrderTimestampExtractor(Time.seconds(0)));
+			
 		
 		// Step 3: Perform Transformations and Operations
 		SingleOutputStreamOperator<ProcessedSumWindow> processedWindows = eventStream
 				.keyBy("key")
 				.window(TumblingEventTimeWindows.of(Time.seconds(2)))
+				.allowedLateness(Time.seconds(10))
 				.process(new MyProcessFunction());
 		
 		// Step 4: Write to Sink(s)
 		processedWindows.writeAsText("output/tumbling_event_time.txt",FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 		
 		// Step 5: Trigger Execution
-		env.execute("TumblingEventTime");		
+		env.execute("TumblingEventTimeAllowedLateness");
+	}
+	
+	
+	private static class MyBoundedOutOfOrderTimestampExtractor extends BoundedOutOfOrdernessTimestampExtractor<EventBean> {
+		public MyBoundedOutOfOrderTimestampExtractor(Time maxOutOfOrderness) {
+			super(maxOutOfOrderness);
+		}
+
+		@Override
+		public long extractTimestamp(EventBean element) {
+			return element.getTimestamp();
+		}
 	}
 	
 
 
-	
-	private static class EventBeanTimestampAndWatermarkAssigner implements AssignerWithPeriodicWatermarks<EventBean> {	
-		private long currentMaxTimestamp = 0;
-		
-	    @Override
-	    public long extractTimestamp(EventBean element, long previousElementTimestamp) {
-	        long timestamp = element.getTimestamp();
-	        currentMaxTimestamp = Math.max(timestamp, currentMaxTimestamp);
-	        return timestamp;
-	    }
-
-	    @Override
-	    public Watermark getCurrentWatermark() {
-	    	return new Watermark(currentMaxTimestamp);
-	    }
-	   
-	}
-	
 	private static class EventBeanParser implements MapFunction<String,EventBean> {	
 		public EventBean map(String input) throws Exception {
 			String[] tokens = input.split(",");;
@@ -82,6 +84,7 @@ public class TumblingEventTime {
 			return event;
 		}
 	}
+	
 	
 	// Generic Parameters: Input, Output, Key, Window
 	private static class MyProcessFunction extends ProcessWindowFunction<EventBean, ProcessedSumWindow, Tuple, TimeWindow> {
@@ -104,7 +107,6 @@ public class TumblingEventTime {
 			System.out.println("PROCESSING WINDOW END " + Utils.getFormattedTimestamp(context.window().getEnd()));
 		}
 	}
-	
 	
 	
 }

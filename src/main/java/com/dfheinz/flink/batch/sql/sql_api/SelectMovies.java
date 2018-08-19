@@ -1,4 +1,4 @@
-package com.dfheinz.flink.batch.sql.tableapi;
+package com.dfheinz.flink.batch.sql.sql_api;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.DataSet;
@@ -14,12 +14,12 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class PetTable {
+public class SelectMovies {
 
 	public static void main(String[] args) throws Exception {
 		
 		try {
-			System.out.println("PetTable BEGIN");
+			System.out.println("PetSQL BEGIN");
 	
 			// Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
@@ -58,26 +58,15 @@ public class PetTable {
 			
 			// Register our table source
 			tableEnv.registerTableSource("pets", petsTableSource);
-			Table pets = tableEnv.scan("pets");
 
 			
 			// Perform Operations
 			// SELECT species, count(species)
 			// FROM pets
 			// WHERE species = 'canine'
-			// GROUP BY species
-			Table counts = pets
-			        .groupBy("species")
-			        .select("species, species.count as count")
-			        .filter("species !== 'bear'");
-			
-			
-			// Convert to Dataset
-			// DataSet<Row> result = tableEnv.toDataSet(counts, Row.class);
-			// DataSet<PetCount> result = tableEnv.toDataSet(counts, PetCount.class);
-			
-			// Write to Sinks
-			// result.print();
+			// ORDER BY species
+			Table counts = tableEnv.sqlQuery(
+				"SELECT species, count(species)  FROM pets WHERE species <> 'bear' group by species");
 			
 			
 			// Write Results to File
@@ -87,8 +76,7 @@ public class PetTable {
 			
 					
 			// Execute
-			JobExecutionResult result  =  env.execute("PetTable");
-			// System.out.println("PetTable END");
+			JobExecutionResult result  =  env.execute("PetSQL");
 
 		
 		} catch (Exception e) {
@@ -96,18 +84,6 @@ public class PetTable {
 		}
 	}
 	
-//	public static class PetCount {
-//		public String species;
-//		public long count;
-//		
-//		public String toString() {
-//			StringBuilder buffer = new StringBuilder();
-//			buffer.append("PetCount.species:" + species);
-//			buffer.append("\tPetCount.count:" + count);
-//			return buffer.toString();
-//		}
-//		
-//	}
 	
 	
 }

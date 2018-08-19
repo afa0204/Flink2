@@ -1,6 +1,7 @@
-package com.dfheinz.flink.batch.sql.sqlapi;
+package com.dfheinz.flink.batch.sql.table_api;
 
 import org.apache.flink.api.common.JobExecutionResult;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
@@ -13,7 +14,7 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class SelectPetSpecies {
+public class SelectCustomersLike {
 
 	public static void main(String[] args) throws Exception {
 		
@@ -24,51 +25,56 @@ public class SelectPetSpecies {
 			BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env); 
 			ParameterTool parms = ParameterTool.fromArgs(args);
 			env.getConfig().setGlobalJobParameters(parms);
-			String input = "input/batch/pets.csv";
-			String output = "output/selected_pets_sql.csv";
+			String input = "input/batch/customers.csv";
+			String output = "output/select_all_customers.csv";
 			
 			// Get Source
-			CsvTableSource petsTableSource = CsvTableSource.builder()
+			CsvTableSource customerTableSource = CsvTableSource.builder()
 				    .path(input)
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
 				    .field("id", Types.INT())
-				    .field("species", Types.STRING())
-				    .field("color", Types.STRING())
-				    .field("weight", Types.DOUBLE())
-				    .field("name", Types.STRING())
-				    .field("age", Types.INT())
+				    .field("first_name", Types.STRING())
+				    .field("last_name", Types.STRING())
+				    .field("street_address1", Types.STRING())
+				    .field("city", Types.STRING())
+				    .field("state", Types.STRING())
+				    .field("zip", Types.STRING())
 				    .build();
 			
 			
 			// Register our table source
-			tableEnv.registerTableSource("pets", petsTableSource);
+			tableEnv.registerTableSource("customers", customerTableSource);
+			Table customerTable = tableEnv.scan("customers");
 
 			
 			// Perform Operations
-			// SELECT species, count(species)
-			// FROM pets
-			// WHERE species != 'bear'
-			// ORDER BY species
-			Table counts = tableEnv.sqlQuery(
-				"SELECT species, count(species)  FROM pets WHERE species <> 'bear' GROUP BY species");
+			// SELECT *
+			// FROM customers
+			Table selectAllCustomers = customerTable
+				.select("*");
+			
+			// Perform Operations
+			// SELECT *
+			// FROM customers
+			Table selectCustomers = customerTable
+				.select("last_name,state")
+				.filter("last_name.like('Jenk%')");
 			
 			
 			// Write Results to File
 			int parallelism = 1;
-			TableSink<Row> sink = new CsvTableSink(output, ",",parallelism, WriteMode.OVERWRITE);
-			counts.writeToSink(sink);
-			
+			TableSink<Row> sink = new CsvTableSink(output, ",", parallelism, WriteMode.OVERWRITE);
+			selectCustomers.writeToSink(sink);
+		
 					
 			// Execute
-			JobExecutionResult result  =  env.execute("SelectPetsSQL");
+			JobExecutionResult result  =  env.execute("SelectCustomers");
 
 		
 		} catch (Exception e) {
 			System.out.println("ERROR:\n" + e);
 		}
 	}
-	
-	
 	
 }

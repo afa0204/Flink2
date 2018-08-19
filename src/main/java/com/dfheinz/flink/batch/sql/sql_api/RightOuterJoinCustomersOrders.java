@@ -1,4 +1,4 @@
-package com.dfheinz.flink.batch.sql.table_api;
+package com.dfheinz.flink.batch.sql.sql_api;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -53,15 +53,13 @@ public class RightOuterJoinCustomersOrders {
 				
 			// Step 3: Register our table sources
 			tableEnv.registerTableSource("customers", customerTableSource);
-			Table customers = tableEnv.scan("customers");
-			
 			tableEnv.registerTableSource("orders", orderTableSource);
-			Table orders = tableEnv.scan("orders");
 			
 			// Step 4: Perform Operations
 			// Perform Join
 			// We will get All Orders
-			Table rightOuterJoin = customers.rightOuterJoin(orders,"customer_id=customer_key").select("first_name,last_name,order_date,amount");	
+			Table rightOuterJoin  = tableEnv.sqlQuery(
+				"SELECT first_name, last_name, order_date, amount FROM customers RIGHT JOIN orders on customers.customer_id = orders.customer_key");
 								
 			// Step 5: Write Results to Sink
 			TableSink<Row> sink = new CsvTableSink("output/right_outer_join_customers_orders.csv", ",", parallelism, WriteMode.OVERWRITE);

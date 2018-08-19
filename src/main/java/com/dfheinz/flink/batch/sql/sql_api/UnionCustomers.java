@@ -1,4 +1,4 @@
-package com.dfheinz.flink.batch.sql.table_api;
+package com.dfheinz.flink.batch.sql.sql_api;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -13,65 +13,67 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class RightOuterJoinCustomersOrders {
-	
+public class UnionCustomers {
+
 	public static void main(String[] args) throws Exception {
+		
 		try {
-			
+	
 			// Step 1: Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 			BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env);
 			int parallelism = 1;
 			ParameterTool parms = ParameterTool.fromArgs(args);
 			env.getConfig().setGlobalJobParameters(parms);
-						
+			
 			// Step 2: Get Table Source
-			CsvTableSource customerTableSource = CsvTableSource.builder()
+			CsvTableSource customerTableSource1 = CsvTableSource.builder()
 				    .path("input/batch/customers.csv")
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
-				    .field("customer_id", Types.LONG())
+				    .field("id", Types.LONG())
 				    .field("first_name", Types.STRING())
 				    .field("last_name", Types.STRING())
-				    .field("country",Types.STRING())
 				    .field("street_address1", Types.STRING())
 				    .field("city", Types.STRING())
 				    .field("state", Types.STRING())
 				    .field("zip", Types.STRING())
 				    .build();
 			
-			CsvTableSource orderTableSource = CsvTableSource.builder()
-					.path("input/batch/orders.csv")
+			// Step 2: Get Table Source
+			CsvTableSource customerTableSource2 = CsvTableSource.builder()
+				    .path("input/batch/customers_canada.csv")
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
-				    .field("order_id", Types.LONG())
-				    .field("order_date", Types.SQL_DATE())
-				    .field("amount", Types.DECIMAL())
-				    .field("status", Types.LONG())
-				    .field("customer_key", Types.LONG())
+				    .field("id", Types.LONG())
+				    .field("first_name", Types.STRING())
+				    .field("last_name", Types.STRING())
+				    .field("street_address1", Types.STRING())
+				    .field("city", Types.STRING())
+				    .field("state", Types.STRING())
+				    .field("zip", Types.STRING())
 				    .build();
-				
-			// Step 3: Register our table sources
-			tableEnv.registerTableSource("customers", customerTableSource);
-			Table customers = tableEnv.scan("customers");
 			
-			tableEnv.registerTableSource("orders", orderTableSource);
-			Table orders = tableEnv.scan("orders");
+			
+			// Step 3: Register our table source
+			tableEnv.registerTableSource("customerSet1", customerTableSource1);		
+			tableEnv.registerTableSource("customerSet2", customerTableSource2);
 			
 			// Step 4: Perform Operations
-			// Perform Join
-			// We will get All Orders
-			Table rightOuterJoin = customers.rightOuterJoin(orders,"customer_id=customer_key").select("first_name,last_name,order_date,amount");	
+			Table allCustomers  = tableEnv.sqlQuery(
+				"SELECT * FROM (SELECT * FROM customerSet1) UNION (SELECT * FROM customerSet2)");		
 								
 			// Step 5: Write Results to Sink
-			TableSink<Row> sink = new CsvTableSink("output/right_outer_join_customers_orders.csv", ",", parallelism, WriteMode.OVERWRITE);
-			rightOuterJoin.writeToSink(sink);
+			TableSink<Row> sink = new CsvTableSink("output/customer_union.csv", ",", parallelism, WriteMode.OVERWRITE);
+			allCustomers.writeToSink(sink);
 					
 			// Step 6: Trigger Application Execution
-			JobExecutionResult result  =  env.execute("RightOuterJoinCustomersOrders");
+			JobExecutionResult result  =  env.execute("UnionCustomers");
+
 		
 		} catch (Exception e) {
 			System.out.println("ERROR:\n" + e);
 		}
 	}
+	
 }

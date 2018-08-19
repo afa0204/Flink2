@@ -1,7 +1,6 @@
-package com.dfheinz.flink.batch.sql.sql_api;
+package com.dfheinz.flink.batch.sql.sqlapi;
 
 import org.apache.flink.api.common.JobExecutionResult;
-import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
@@ -14,38 +13,23 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class SelectMovies {
+public class SelectPetSpecies {
 
 	public static void main(String[] args) throws Exception {
 		
 		try {
-			System.out.println("PetSQL BEGIN");
 	
 			// Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 			BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env); 
-			
-			final ParameterTool parms = ParameterTool.fromArgs(args);
-			
-	
-			// Get and Set execution parameters.
-			DataSet<String> text = null;
-			if (!parms.has("input") || !parms.has("output")) {
-				System.out.println("Usage --input to specify file input");
-				System.out.println("Usage --output to specify file output");
-				System.exit(1);
-				return;
-			}
+			ParameterTool parms = ParameterTool.fromArgs(args);
 			env.getConfig().setGlobalJobParameters(parms);
-			
-			// Echo our parameters
-			System.out.println("input=" + parms.get("input"));
-			System.out.println("output=" + parms.get("output"));
+			String input = "input/batch/pets.csv";
+			String output = "output/selected_pets_sql.csv";
 			
 			// Get Source
-			String inputPath = parms.get("input");
 			CsvTableSource petsTableSource = CsvTableSource.builder()
-				    .path(inputPath)
+				    .path(input)
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
 				    .field("id", Types.INT())
@@ -53,6 +37,7 @@ public class SelectMovies {
 				    .field("color", Types.STRING())
 				    .field("weight", Types.DOUBLE())
 				    .field("name", Types.STRING())
+				    .field("age", Types.INT())
 				    .build();
 			
 			
@@ -63,20 +48,20 @@ public class SelectMovies {
 			// Perform Operations
 			// SELECT species, count(species)
 			// FROM pets
-			// WHERE species = 'canine'
+			// WHERE species != 'bear'
 			// ORDER BY species
 			Table counts = tableEnv.sqlQuery(
-				"SELECT species, count(species)  FROM pets WHERE species <> 'bear' group by species");
+				"SELECT species, count(species)  FROM pets WHERE species <> 'bear' GROUP BY species");
 			
 			
 			// Write Results to File
 			int parallelism = 1;
-			TableSink<Row> sink = new CsvTableSink(parms.get("output"), ",", parallelism, WriteMode.OVERWRITE);
+			TableSink<Row> sink = new CsvTableSink(output, ",",parallelism, WriteMode.OVERWRITE);
 			counts.writeToSink(sink);
 			
 					
 			// Execute
-			JobExecutionResult result  =  env.execute("PetSQL");
+			JobExecutionResult result  =  env.execute("SelectPetsSQL");
 
 		
 		} catch (Exception e) {

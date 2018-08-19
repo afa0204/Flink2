@@ -62,6 +62,7 @@ public class LeftOuterJoinCustomersOrders {
 			
 			// Step 4: Perform Operations
 			// Perform Join
+			// We will get All Customers
 			Table leftOuterJoin = customers.leftOuterJoin(orders,"customer_id=customer_key").select("first_name,last_name,order_date,amount");
 			
 								

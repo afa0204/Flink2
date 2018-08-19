@@ -1,4 +1,4 @@
-package com.dfheinz.flink.batch.sql.table_api;
+package com.dfheinz.flink.batch.sql.sqlapi;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -13,22 +13,21 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class SelectOrdersOrCondition {
+public class SelectAllOrders {
 
 	public static void main(String[] args) throws Exception {
 		
-		try {
-	
+		try {	
 			// Step 1: Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+			int parallelism = 1;
 			BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env); 
 			ParameterTool parms = ParameterTool.fromArgs(args);
 			env.getConfig().setGlobalJobParameters(parms);
-			String input = "input/batch/orders.csv";
 			
 			// Step 2: Get Table Source
 			CsvTableSource orderTableSource = CsvTableSource.builder()
-				    .path(input)
+					.path("input/batch/orders.csv")
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
 				    .field("id", Types.LONG())
@@ -37,32 +36,27 @@ public class SelectOrdersOrCondition {
 				    .field("customer_id", Types.LONG())
 				    .build();
 			
-			
 			// Step 3: Register our table source
 			tableEnv.registerTableSource("orders", orderTableSource);
-			Table orderTable = tableEnv.scan("orders");
-
-			
+		
 			// Step 4: Perform Operations
-			// SELECT *
+			// SELECT id, order_date, amount, customer_id
 			// FROM orders
-			// WHERE amount = 22.33 OR amount == 432.87
-			Table result = orderTable
-				.select("id, order_date, amount, customer_id")
-				.filter("amount = 22.33 || amount = 432.87");
+			Table allOrders = tableEnv.sqlQuery(
+				"SELECT id, order_date, amount, customer_id FROM orders ORDER BY id");
 			
 			// Step 5: Write Results to Sink
-			int parallelism = 1;
-			TableSink<Row> sink = new CsvTableSink("output/select_orders_amount_or_condition.csv", ",", parallelism, WriteMode.OVERWRITE);
-			result.writeToSink(sink);
-						
-			// Step 6: Trigger Application Execution
-			JobExecutionResult jobResult  =  env.execute("SelectOrdersOrCondition");
-
+			TableSink<Row> sink = new CsvTableSink("output/select_all_orders_api_sql.csv", ",", parallelism, WriteMode.OVERWRITE);
+			allOrders.writeToSink(sink);
+							
+			// Execute
+			JobExecutionResult result  =  env.execute("SelectAllOrders");
 		
 		} catch (Exception e) {
 			System.out.println("ERROR:\n" + e);
 		}
 	}
+	
+	
 	
 }

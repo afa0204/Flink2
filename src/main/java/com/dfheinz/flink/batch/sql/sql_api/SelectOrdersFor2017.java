@@ -1,4 +1,4 @@
-package com.dfheinz.flink.batch.sql.table_api;
+package com.dfheinz.flink.batch.sql.sql_api;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -13,7 +13,7 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class SelectOrdersOrCondition {
+public class SelectOrdersFor2017 {
 
 	public static void main(String[] args) throws Exception {
 		
@@ -31,7 +31,7 @@ public class SelectOrdersOrCondition {
 				    .path(input)
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
-				    .field("id", Types.LONG())
+				    .field("id", Types.INT())
 				    .field("order_date", Types.SQL_DATE())
 				    .field("amount", Types.DECIMAL())
 				    .field("customer_id", Types.LONG())
@@ -40,24 +40,22 @@ public class SelectOrdersOrCondition {
 			
 			// Step 3: Register our table source
 			tableEnv.registerTableSource("orders", orderTableSource);
-			Table orderTable = tableEnv.scan("orders");
 
 			
 			// Step 4: Perform Operations
-			// SELECT *
+			// SELECT id, order_date, amount, customer_id
 			// FROM orders
-			// WHERE amount = 22.33 OR amount == 432.87
-			Table result = orderTable
-				.select("id, order_date, amount, customer_id")
-				.filter("amount = 22.33 || amount = 432.87");
-			
+			// WHERE order_date < '2018-01-01'
+			Table ordersFor2017 = tableEnv.sqlQuery(
+				"SELECT id, order_date, amount, customer_id FROM orders WHERE order_date < DATE '2018-01-01'");			
+	
 			// Step 5: Write Results to Sink
 			int parallelism = 1;
-			TableSink<Row> sink = new CsvTableSink("output/select_orders_amount_or_condition.csv", ",", parallelism, WriteMode.OVERWRITE);
-			result.writeToSink(sink);
+			TableSink<Row> sink = new CsvTableSink("output/select_all_orders_2017.csv", ",", parallelism, WriteMode.OVERWRITE);
+			ordersFor2017.writeToSink(sink);
 						
 			// Step 6: Trigger Application Execution
-			JobExecutionResult jobResult  =  env.execute("SelectOrdersOrCondition");
+			JobExecutionResult result  =  env.execute("SelectOrdersFor2017");
 
 		
 		} catch (Exception e) {

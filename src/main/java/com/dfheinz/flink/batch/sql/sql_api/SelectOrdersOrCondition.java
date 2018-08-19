@@ -1,4 +1,4 @@
-package com.dfheinz.flink.batch.sql.table_api;
+package com.dfheinz.flink.batch.sql.sql_api;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -40,16 +40,13 @@ public class SelectOrdersOrCondition {
 			
 			// Step 3: Register our table source
 			tableEnv.registerTableSource("orders", orderTableSource);
-			Table orderTable = tableEnv.scan("orders");
-
 			
 			// Step 4: Perform Operations
 			// SELECT *
 			// FROM orders
 			// WHERE amount = 22.33 OR amount == 432.87
-			Table result = orderTable
-				.select("id, order_date, amount, customer_id")
-				.filter("amount = 22.33 || amount = 432.87");
+			Table result  = tableEnv.sqlQuery(
+				"SELECT id, order_date, amount, customer_id FROM orders WHERE amount = 22.33 OR amount = 432.87");
 			
 			// Step 5: Write Results to Sink
 			int parallelism = 1;

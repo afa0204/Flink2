@@ -13,62 +13,54 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class SelectPetSpecies {
+public class SelectOrdersAmountGreaterThan {
 
 	public static void main(String[] args) throws Exception {
 		
 		try {
 	
-			// Get Execution Environment
+			// Step 1: Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 			BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env); 
 			ParameterTool parms = ParameterTool.fromArgs(args);
 			env.getConfig().setGlobalJobParameters(parms);
-			String input = "input/batch/pets.csv";
-			String output = "output/selected_pets_sql.csv";
+			String input = "input/batch/orders.csv";
 			
-			// Get Source
-			CsvTableSource petsTableSource = CsvTableSource.builder()
+			// Step 2: Get Table Source
+			CsvTableSource orderTableSource = CsvTableSource.builder()
 				    .path(input)
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
 				    .field("id", Types.INT())
-				    .field("species", Types.STRING())
-				    .field("color", Types.STRING())
-				    .field("weight", Types.DOUBLE())
-				    .field("name", Types.STRING())
-				    .field("age", Types.INT())
+				    .field("order_date", Types.SQL_DATE())
+				    .field("amount", Types.DECIMAL())
+				    .field("customer_id", Types.LONG())
 				    .build();
 			
 			
-			// Register our table source
-			tableEnv.registerTableSource("pets", petsTableSource);
+			// Step 3: Register our table source
+			tableEnv.registerTableSource("orders", orderTableSource);
 
 			
-			// Perform Operations
-			// SELECT species, count(species)
-			// FROM pets
-			// WHERE species != 'bear'
-			// ORDER BY species
-			Table counts = tableEnv.sqlQuery(
-				"SELECT species, count(species)  FROM pets WHERE species <> 'bear' GROUP BY species");
+			// Step 4: Perform Operations
+			// SELECT *
+			// FROM orders
+			// WHERE amount > 35.00
+			Table result  = tableEnv.sqlQuery(
+				"SELECT id, order_date, amount, customer_id FROM orders WHERE amount > 35.00");			
 			
-			
-			// Write Results to File
+			// Step 5: Write Results to Sink
 			int parallelism = 1;
-			TableSink<Row> sink = new CsvTableSink(output, ",",parallelism, WriteMode.OVERWRITE);
-			counts.writeToSink(sink);
-			
-					
-			// Execute
-			JobExecutionResult result  =  env.execute("SelectPetsSQL");
+			TableSink<Row> sink = new CsvTableSink("output/select_all_orders_amount_greater_than35.csv", ",", parallelism, WriteMode.OVERWRITE);
+			result.writeToSink(sink);
+						
+			// Step 6: Trigger Application Execution
+			JobExecutionResult jobResult  =  env.execute("SelectOrdersAmountGreaterThan");
 
 		
 		} catch (Exception e) {
 			System.out.println("ERROR:\n" + e);
 		}
 	}
-	
-	
 	
 }

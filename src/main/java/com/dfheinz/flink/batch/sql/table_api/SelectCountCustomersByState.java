@@ -51,14 +51,14 @@ public class SelectCountCustomersByState {
 			// SELECT count(*)
 			// FROM customers
 			// GROUP BY state
-			Table maxAmountsByCustomer = customerTable
+			Table countAmountsByCustomer = customerTable
 				.groupBy("state")
 				.select("state, state.count as stateCount");
 					
 			// Step 5: Write Results to Sink
 			int parallelism = 1;
 			TableSink<Row> sink = new CsvTableSink("output/count_customers_by_state.csv", ",", parallelism, WriteMode.OVERWRITE);
-			maxAmountsByCustomer.writeToSink(sink);
+			countAmountsByCustomer.writeToSink(sink);
 						
 			// Step 6: Trigger Application Execution
 			JobExecutionResult jobResult  =  env.execute("SelectCountCustomersByState");

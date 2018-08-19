@@ -30,7 +30,7 @@ public class SelectAllOrders {
 					.path("input/batch/ordersDebug.csv")
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
-				    .field("id", Types.INT())
+				    .field("id", Types.LONG())
 				    .field("order_date", Types.SQL_DATE())
 				    .field("amount", Types.DECIMAL())
 				    .field("status", Types.LONG())

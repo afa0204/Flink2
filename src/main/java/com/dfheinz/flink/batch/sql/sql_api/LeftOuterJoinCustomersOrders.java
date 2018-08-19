@@ -1,6 +1,8 @@
-package com.dfheinz.flink.batch.sql.table_api;
+package com.dfheinz.flink.batch.sql.sql_api;
 
 import org.apache.flink.api.common.JobExecutionResult;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
@@ -13,7 +15,7 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class RightOuterJoinCustomersOrders {
+public class LeftOuterJoinCustomersOrders {
 	
 	public static void main(String[] args) throws Exception {
 		try {
@@ -53,22 +55,20 @@ public class RightOuterJoinCustomersOrders {
 				
 			// Step 3: Register our table sources
 			tableEnv.registerTableSource("customers", customerTableSource);
-			Table customers = tableEnv.scan("customers");
-			
 			tableEnv.registerTableSource("orders", orderTableSource);
-			Table orders = tableEnv.scan("orders");
 			
 			// Step 4: Perform Operations
 			// Perform Join
-			// We will get All Orders
-			Table rightOuterJoin = customers.rightOuterJoin(orders,"customer_id=customer_key").select("first_name,last_name,order_date,amount");	
+			// We will get All Customers
+			Table leftOuterJoin  = tableEnv.sqlQuery(
+				"SELECT first_name, last_name, order_date, amount FROM customers LEFT JOIN orders on customers.customer_id = orders.customer_key");
 								
 			// Step 5: Write Results to Sink
-			TableSink<Row> sink = new CsvTableSink("output/right_outer_join_customers_orders.csv", ",", parallelism, WriteMode.OVERWRITE);
-			rightOuterJoin.writeToSink(sink);
+			TableSink<Row> sink = new CsvTableSink("output/left_outer_join_customers_orders.csv", ",", parallelism, WriteMode.OVERWRITE);
+			leftOuterJoin.writeToSink(sink);
 					
 			// Step 6: Trigger Application Execution
-			JobExecutionResult result  =  env.execute("RightOuterJoinCustomersOrders");
+			JobExecutionResult result  =  env.execute("LeftOuterJoinCustomersOrders");
 		
 		} catch (Exception e) {
 			System.out.println("ERROR:\n" + e);

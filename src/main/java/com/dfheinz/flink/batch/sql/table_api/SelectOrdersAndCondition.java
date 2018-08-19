@@ -4,7 +4,6 @@ import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
-import org.apache.flink.table.api.GroupedTable;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.Types;
@@ -14,8 +13,10 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class SelectMaxOrderGroupByCustomer {
+public class SelectOrdersAndCondition {
+
 	public static void main(String[] args) throws Exception {
+		
 		try {
 	
 			// Step 1: Get Execution Environment
@@ -23,17 +24,17 @@ public class SelectMaxOrderGroupByCustomer {
 			BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env); 
 			ParameterTool parms = ParameterTool.fromArgs(args);
 			env.getConfig().setGlobalJobParameters(parms);
+			String input = "input/batch/orders.csv";
 			
 			// Step 2: Get Table Source
 			CsvTableSource orderTableSource = CsvTableSource.builder()
-				    .path("input/batch/orders.csv")
+				    .path(input)
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
 				    .field("id", Types.LONG())
 				    .field("order_date", Types.SQL_DATE())
 				    .field("amount", Types.DECIMAL())
-				    .field("status", Types.DECIMAL())
-				    .field("customer_key", Types.LONG())
+				    .field("customer_id", Types.LONG())
 				    .build();
 			
 			
@@ -43,20 +44,20 @@ public class SelectMaxOrderGroupByCustomer {
 
 			
 			// Step 4: Perform Operations
-			// SELECT customer_key, max(amount) as maxAmount
+			// SELECT *
 			// FROM orders
-			// GROUP BY CUSTOMER_KEY
-			Table maxAmountsByCustomer = orderTable
-				.groupBy("customer_key")
-				.select("customer_key, amount.max as maxAmount");
-					
+			// WHERE amount > 35.00
+			Table result = orderTable
+				.select("id, order_date, amount, customer_id")
+				.filter("amount > 35.00  && amount < 100.00");
+			
 			// Step 5: Write Results to Sink
 			int parallelism = 1;
-			TableSink<Row> sink = new CsvTableSink("output/max_amounts_by_customer.csv", ",", parallelism, WriteMode.OVERWRITE);
-			maxAmountsByCustomer.writeToSink(sink);
+			TableSink<Row> sink = new CsvTableSink("output/select_orders_amount_between_35_and_100.csv", ",", parallelism, WriteMode.OVERWRITE);
+			result.writeToSink(sink);
 						
 			// Step 6: Trigger Application Execution
-			JobExecutionResult jobResult  =  env.execute("SelectMaxOrderGroupByCustomer");
+			JobExecutionResult jobResult  =  env.execute("SelectOrdersAndCondition");
 
 		
 		} catch (Exception e) {

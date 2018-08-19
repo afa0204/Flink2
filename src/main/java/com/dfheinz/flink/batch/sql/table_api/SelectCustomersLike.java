@@ -20,56 +20,49 @@ public class SelectCustomersLike {
 		
 		try {
 	
-			// Get Execution Environment
+			// Step 1: Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 			BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env); 
 			ParameterTool parms = ParameterTool.fromArgs(args);
 			env.getConfig().setGlobalJobParameters(parms);
-			String input = "input/batch/customers.csv";
-			String output = "output/select_all_customers.csv";
 			
-			// Get Source
+			
+			// Step 2: Get Table Source
 			CsvTableSource customerTableSource = CsvTableSource.builder()
-				    .path(input)
+				    .path("input/batch/customers.csv")
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
-				    .field("id", Types.INT())
+				    .field("id", Types.LONG())
 				    .field("first_name", Types.STRING())
 				    .field("last_name", Types.STRING())
+				    .field("country",Types.STRING())
 				    .field("street_address1", Types.STRING())
 				    .field("city", Types.STRING())
 				    .field("state", Types.STRING())
 				    .field("zip", Types.STRING())
 				    .build();
-			
-			
-			// Register our table source
+					
+			// Step 3: Register our table source
 			tableEnv.registerTableSource("customers", customerTableSource);
 			Table customerTable = tableEnv.scan("customers");
-
-			
+	
+			// Step 4: Perform Operations
 			// Perform Operations
-			// SELECT *
+			// SELECT first_name, last_name, state
 			// FROM customers
-			Table selectAllCustomers = customerTable
-				.select("*");
+			// WHERE last_name like 'Green%'
+			Table result = customerTable
+				.select("first_name,last_name,state")
+				.filter("last_name.like('Green%')");
 			
-			// Perform Operations
-			// SELECT *
-			// FROM customers
-			Table selectCustomers = customerTable
-				.select("last_name,state")
-				.filter("last_name.like('Jenk%')");
-			
-			
-			// Write Results to File
+			// Step 5: Write Results to Sink
 			int parallelism = 1;
-			TableSink<Row> sink = new CsvTableSink(output, ",", parallelism, WriteMode.OVERWRITE);
-			selectCustomers.writeToSink(sink);
+			TableSink<Row> sink = new CsvTableSink("output/customers_like_green.csv", ",", parallelism, WriteMode.OVERWRITE);
+			result.writeToSink(sink);
 		
 					
-			// Execute
-			JobExecutionResult result  =  env.execute("SelectCustomers");
+			// Step 6: Trigger Application Execution
+			JobExecutionResult jobResult  =  env.execute("SelectCustomersLike");
 
 		
 		} catch (Exception e) {

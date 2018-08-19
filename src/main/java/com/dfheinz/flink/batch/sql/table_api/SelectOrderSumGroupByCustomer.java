@@ -18,13 +18,13 @@ public class SelectOrderSumGroupByCustomer {
 	public static void main(String[] args) throws Exception {
 		try {
 	
-			// Get Execution Environment
+			// Step 1: Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 			BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env); 
 			ParameterTool parms = ParameterTool.fromArgs(args);
 			env.getConfig().setGlobalJobParameters(parms);
 			
-			// Get Source
+			// Step 2: Get Table Source
 			CsvTableSource orderTableSource = CsvTableSource.builder()
 				    .path("input/batch/orders.csv")
 				    .ignoreFirstLine()
@@ -37,12 +37,12 @@ public class SelectOrderSumGroupByCustomer {
 				    .build();
 			
 			
-			// Register our table source
+			// Step 3: Register our table source
 			tableEnv.registerTableSource("orders", orderTableSource);
 			Table orderTable = tableEnv.scan("orders");
 
 			
-			// Perform Operations
+			// Step 4: Perform Operations
 			// SELECT customer_key, sum(amount) as totalAmount
 			// FROM orders
 			// GROUP BY CUSTOMER_KEY
@@ -50,12 +50,12 @@ public class SelectOrderSumGroupByCustomer {
 				.groupBy("customer_key")
 				.select("customer_key, amount.sum as totalAmount");
 					
-			// Write Results to File
+			// Step 5: Write Results to Sink
 			int parallelism = 1;
 			TableSink<Row> sink = new CsvTableSink("output/amounts_by_customer.csv", ",", parallelism, WriteMode.OVERWRITE);
 			amountsByCustomer.writeToSink(sink);
 						
-			// Execute
+			// Step 6: Trigger Application Execution
 			JobExecutionResult jobResult  =  env.execute("SelectOrderSumGroupByCustomer");
 
 		

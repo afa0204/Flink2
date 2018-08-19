@@ -33,7 +33,7 @@ public class SelectAllPets {
 					.path("input/batch/pets.csv")
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
-				    .field("id", Types.INT())
+				    .field("id", Types.LONG())
 				    .field("species", Types.STRING())
 				    .field("breed", Types.STRING())
 				    .field("date_of_birth", Types.SQL_DATE())

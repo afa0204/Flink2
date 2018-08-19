@@ -19,14 +19,14 @@ public class SelectOrdersAmountGreaterThan {
 		
 		try {
 	
-			// Get Execution Environment
+			// Step 1: Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 			BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env); 
 			ParameterTool parms = ParameterTool.fromArgs(args);
 			env.getConfig().setGlobalJobParameters(parms);
 			String input = "input/batch/orders.csv";
 			
-			// Get Source
+			// Step 2: Get Table Source
 			CsvTableSource orderTableSource = CsvTableSource.builder()
 				    .path(input)
 				    .ignoreFirstLine()
@@ -38,12 +38,12 @@ public class SelectOrdersAmountGreaterThan {
 				    .build();
 			
 			
-			// Register our table source
+			// Step 3: Register our table source
 			tableEnv.registerTableSource("orders", orderTableSource);
 			Table orderTable = tableEnv.scan("orders");
 
 			
-			// Perform Operations
+			// Step 4: Perform Operations
 			// SELECT *
 			// FROM orders
 			// WHERE amount > 35.00
@@ -51,13 +51,13 @@ public class SelectOrdersAmountGreaterThan {
 				.select("id, order_date, amount, customer_id")
 				.filter("amount > 35.00");
 			
-			// Write Results to File
+			// Step 5: Write Results to Sink
 			int parallelism = 1;
 			TableSink<Row> sink = new CsvTableSink("output/select_all_orders_amount_greater_than35.csv", ",", parallelism, WriteMode.OVERWRITE);
 			result.writeToSink(sink);
 						
-			// Execute
-			JobExecutionResult jobResult  =  env.execute("SelectOrders");
+			// Step 6: Trigger Application Execution
+			JobExecutionResult jobResult  =  env.execute("SelectOrdersAmountGreaterThan");
 
 		
 		} catch (Exception e) {

@@ -1,8 +1,6 @@
 package com.dfheinz.flink.batch.sql.table_api;
 
 import org.apache.flink.api.common.JobExecutionResult;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
@@ -15,7 +13,7 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.CsvTableSource;
 import org.apache.flink.types.Row;
 
-public class InnerJoinOrdersCustomers {
+public class RightOuterJoinCustomersOrders {
 	
 	public static void main(String[] args) throws Exception {
 		try {
@@ -28,17 +26,6 @@ public class InnerJoinOrdersCustomers {
 			env.getConfig().setGlobalJobParameters(parms);
 						
 			// Step 2: Get Table Source
-			CsvTableSource orderTableSource = CsvTableSource.builder()
-					.path("input/batch/orders.csv")
-				    .ignoreFirstLine()
-				    .fieldDelimiter(",")
-				    .field("order_id", Types.LONG())
-				    .field("order_date", Types.SQL_DATE())
-				    .field("amount", Types.DECIMAL())
-				    .field("status", Types.LONG())
-				    .field("customer_key", Types.LONG())
-				    .build();
-			
 			CsvTableSource customerTableSource = CsvTableSource.builder()
 				    .path("input/batch/customers.csv")
 				    .ignoreFirstLine()
@@ -53,22 +40,35 @@ public class InnerJoinOrdersCustomers {
 				    .field("zip", Types.STRING())
 				    .build();
 			
+			CsvTableSource orderTableSource = CsvTableSource.builder()
+					.path("input/batch/orders.csv")
+				    .ignoreFirstLine()
+				    .fieldDelimiter(",")
+				    .field("order_id", Types.LONG())
+				    .field("order_date", Types.SQL_DATE())
+				    .field("amount", Types.DECIMAL())
+				    .field("status", Types.LONG())
+				    .field("customer_key", Types.LONG())
+				    .build();
+				
 			// Step 3: Register our table sources
-			tableEnv.registerTableSource("orders", orderTableSource);
-			Table orders = tableEnv.scan("orders");
-			
 			tableEnv.registerTableSource("customers", customerTableSource);
 			Table customers = tableEnv.scan("customers");
 			
+			tableEnv.registerTableSource("orders", orderTableSource);
+			Table orders = tableEnv.scan("orders");
+			
 			// Step 4: Perform Operations
-			Table innerJoin = orders.join(customers).where("customer_key=customer_id").select("order_id,last_name,order_date,amount");
+			// Perform Join
+			Table rightOuterJoin = orders.rightOuterJoin(customers,"customer_id=customer_key").select("order_date,amount,first_name,last_name");
+			
 								
 			// Step 5: Write Results to Sink
-			TableSink<Row> sink = new CsvTableSink("output/orders_join_customers.csv", ",", parallelism, WriteMode.OVERWRITE);
-			innerJoin.writeToSink(sink);
+			TableSink<Row> sink = new CsvTableSink("output/right_outer_join_customers_orders.csv", ",", parallelism, WriteMode.OVERWRITE);
+			rightOuterJoin.writeToSink(sink);
 					
 			// Step 6: Trigger Application Execution
-			JobExecutionResult result  =  env.execute("InnerJoinOrdersCustomers");
+			JobExecutionResult result  =  env.execute("RightOuterJoinCustomersOrders");
 		
 		} catch (Exception e) {
 			System.out.println("ERROR:\n" + e);

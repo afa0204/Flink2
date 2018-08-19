@@ -19,14 +19,14 @@ public class SelectOrdersFor2017 {
 		
 		try {
 	
-			// Get Execution Environment
+			// Step 1: Get Execution Environment
 			ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 			BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env); 
 			ParameterTool parms = ParameterTool.fromArgs(args);
 			env.getConfig().setGlobalJobParameters(parms);
 			String input = "input/batch/orders.csv";
 			
-			// Get Source
+			// Step 2: Get Table Source
 			CsvTableSource orderTableSource = CsvTableSource.builder()
 				    .path(input)
 				    .ignoreFirstLine()
@@ -38,32 +38,27 @@ public class SelectOrdersFor2017 {
 				    .build();
 			
 			
-			// Register our table source
+			// Step 3: Register our table source
 			tableEnv.registerTableSource("orders", orderTableSource);
 			Table orderTable = tableEnv.scan("orders");
 
 			
-			// Perform Operations
-			// SELECT *
+			// Step 4: Perform Operations
+			// SELECT id, order_date, amount, customer_id
 			// FROM orders
-			// STRING.like(STRING)
+			// WHERE order_date < '2018-01-01'
 			Table selectAllOrders = orderTable
 				.select("id, order_date, amount, customer_id")
-				// .filter("amount > 35.00");
-			    // .filter("amount > 28.00 && amount < 114.00");
-			    //.filter("amount == 28.15 || amount == 112.88");
-			    // .filter("order_date < '2018-08-10'.toDate()");
 				.filter("order_date < '2018-01-01'.toDate()");
-				// .filter("order_date < currentDate()");
 			
 			
-			// Write Results to File
+			// Step 5: Write Results to Sink
 			int parallelism = 1;
 			TableSink<Row> sink = new CsvTableSink("output/select_all_orders_2017.csv", ",", parallelism, WriteMode.OVERWRITE);
 			selectAllOrders.writeToSink(sink);
 						
-			// Execute
-			JobExecutionResult result  =  env.execute("SelectOrders");
+			// Step 6: Trigger Application Execution
+			JobExecutionResult result  =  env.execute("SelectOrdersFor2017");
 
 		
 		} catch (Exception e) {

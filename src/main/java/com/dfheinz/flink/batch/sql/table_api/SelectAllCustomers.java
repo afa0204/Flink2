@@ -29,12 +29,13 @@ public class SelectAllCustomers {
 			
 			// Step 2: Get Table Source
 			CsvTableSource customerTableSource = CsvTableSource.builder()
-				    .path("input/batch/customersDebug.csv")
+				    .path("input/batch/customers.csv")
 				    .ignoreFirstLine()
 				    .fieldDelimiter(",")
 				    .field("id", Types.INT())
 				    .field("first_name", Types.STRING())
 				    .field("last_name", Types.STRING())
+				    .field("country",Types.STRING())
 				    .field("street_address1", Types.STRING())
 				    .field("city", Types.STRING())
 				    .field("state", Types.STRING())
@@ -56,7 +57,7 @@ public class SelectAllCustomers {
 			TableSink<Row> sink = new CsvTableSink("output/select_all_customers.csv", ",", parallelism, WriteMode.OVERWRITE);
 			allCustomers.writeToSink(sink);
 					
-			// Execute
+			// Step 6: Trigger Application Execution
 			JobExecutionResult result  =  env.execute("SelectAllCustomers");
 
 		

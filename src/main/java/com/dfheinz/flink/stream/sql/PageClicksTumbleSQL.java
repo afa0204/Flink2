@@ -37,7 +37,8 @@ public class PageClicksTumbleSQL {
 		// Step 1: Get Execution Environment
 		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
-		StreamTableEnvironment tableEnvironment = TableEnvironment.getTableEnvironment(env); 
+		env.setParallelism(1);
+		StreamTableEnvironment tableEnvironment = TableEnvironment.getTableEnvironment(env);
 		ParameterTool parms = ParameterTool.fromArgs(args);
 		env.getConfig().setGlobalJobParameters(parms);
 		String hostName = "localhost";
@@ -65,8 +66,7 @@ public class PageClicksTumbleSQL {
 		windowedTable.printSchema();	
 		
 		// Convert Dynamic Table to AppendStream
-		Table resultTable = windowedTable
-		  .select("wstart, wend, username,viewcount");
+		Table resultTable = windowedTable.select("wstart, wend, username,viewcount");
 		TupleTypeInfo<Tuple4<Timestamp,Timestamp,String,Long>> tupleTypeInfo = new TupleTypeInfo<>(
 				Types.SQL_TIMESTAMP,
 				Types.SQL_TIMESTAMP,
@@ -78,7 +78,7 @@ public class PageClicksTumbleSQL {
 		
 		// Write to Sink(s)
 		resultDataStream.print();
-		resultDataStream.writeAsText("output/pageviews_tumbleql.txt", FileSystem.WriteMode.OVERWRITE).setParallelism(1);		
+		resultDataStream.writeAsText("output/pageviews_tumble_sql.txt", FileSystem.WriteMode.OVERWRITE).setParallelism(1);		
 		
 
 		// Step 5: Trigger Execution

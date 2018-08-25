@@ -45,7 +45,7 @@ public class WatermarkTests {
 	
 	
 	@Test
-	@Ignore
+	//@Ignore
 	public void testStreamingEventTimeIdeal2() {
 		try {
 			String fileName = "input/event_time_ideal_window2.txt";
@@ -57,7 +57,7 @@ public class WatermarkTests {
 	}
 	
 	@Test
-	// @Ignore
+	@Ignore
 	public void testStreamingEventTimeLate2() {
 		try {
 			String fileName = "input/event_time_late_window2.txt";

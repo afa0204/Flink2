@@ -1,9 +1,21 @@
 #key,label,value,eventTimeDelay,processTimeDelay
-Mary,Mary.home,./home,1.0,0.0
+
+# First 10 second Window
+Mary,Mary.home,./home,0.0,0.0
 Bob,Bob.cart,./cart,1.0,0.0
 Mary,Mary.prod,./prod?id=1,1.0,0.0
-Liz,Liz.home,./home,1.0,0.0
+Mary,Mary.prod,./prod?id=4,1.0,0.0
 
-#John,John.cart,./cart,8.0,0.0
-#Mary,Mary.prod,./prod?id=2,1.0,0.0
-#Ed,John.cart,./cart,1.0,0.0
+# Second 10 second Window
+Bob,Bob.prod,./prod?id=5,7.0,0.0
+Liz,Liz.home,./home,1.0,0.0
+Liz,Liz.prod,./prod?id=7,1.0,0.0
+
+# Third 10 second Window
+Mary,Mary.cart,./cart,8.0,0.0
+Liz,Liz.home,./home,1.0,0.0
+Bob,Bob.prod,./prod?id=3,1.0,0.0
+Bob,Bob.home,./home,1.0,0.0
+
+# End Marker
+Z,Z.home,./home,7.0,0.0

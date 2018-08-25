@@ -48,7 +48,8 @@ public class StreamSQLTests {
 	public void testPageClicks1() {
 		try {
 			String fileName = "input/clickevents1.txt";
-			runEventSocketProducer(fileName);
+			int windowBoundary = 10;
+			runEventSocketProducer(fileName, windowBoundary);
 		} catch (Exception e) {
 			logger.error("ERROR", e);
 		}		
@@ -59,20 +60,22 @@ public class StreamSQLTests {
 	public void testPageClicks2() {
 		try {
 			String fileName = "input/clickevents2.txt";
-			runEventSocketProducer(fileName);
+			int windowBoundary = 10;
+			runEventSocketProducer(fileName, windowBoundary);
 		} catch (Exception e) {
 			logger.error("ERROR", e);
 		}		
 	}
 	
-	
-	private void runEventSocketProducer(String fileName) throws Exception {
+	private void runEventSocketProducer(String fileName, int windowSize) throws Exception {
 		String strategyClassName = EventProducerStrategy.class.getCanonicalName();
 		Map<String,String> parms = new HashMap<String,String>();
 		parms.put("filePath",fileName);
+		parms.put("windowSize", String.valueOf(windowSize));
 		SocketProducerServer server = new SocketProducerServer(strategyClassName, parms);
 		server.execute();		
-	}	
+	}
+	
 	
 
 }

@@ -1,13 +1,10 @@
 package com.dfheinz.flink.stream.fault;
 
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-
-import com.dfheinz.flink.utils.Utils;
 
 
 public class ComputeSumFaultTolerant {
@@ -20,6 +17,8 @@ public class ComputeSumFaultTolerant {
 		env.getConfig().setGlobalJobParameters(parms);
 		String host = "localhost";
 		int port = 9999;
+		
+		System.out.println("ComputeSumFaultTolerant BEGIN");
 	
 		// Setup Checkpoint and Retry
 		// Utils.configureCheckpoint(env,checkpointBackendURL);
@@ -33,6 +32,8 @@ public class ComputeSumFaultTolerant {
 				.sum(1);
 		eventStream.print();
 		
+		System.out.println("OUTPUT SUM");
+		
 		
 		// Execute
 		env.execute("ComputeSumFaultTolerant");
@@ -40,9 +41,11 @@ public class ComputeSumFaultTolerant {
 	
 	private static class MessageParser implements MapFunction<String,Tuple2<String,Long>> {
 		public Tuple2<String,Long> map(String input) throws Exception {
+			System.out.println("PARSE=" + input);
 			String[] tokens = input.toLowerCase().split(",");
 			String key = tokens[0];
 			Long value = Long.valueOf(tokens[1]);
+			System.out.println("Parsed: " + key + " " + value);
 			return new Tuple2<String,Long>(key,value);
 		}
 	}

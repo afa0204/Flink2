@@ -1,4 +1,3 @@
-@echo off
 APPROOT=$HOME/code/Flink2
 APPCLASS=com.dfheinz.flink.stream.fault.ComputeSumFaultTolerant
 

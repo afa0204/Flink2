@@ -32,20 +32,15 @@ public class ComputeSumFaultTolerant {
 				.sum(1);
 		eventStream.print();
 		
-		System.out.println("OUTPUT SUM");
-		
-		
 		// Execute
 		env.execute("ComputeSumFaultTolerant");
 	}
 	
 	private static class MessageParser implements MapFunction<String,Tuple2<String,Long>> {
 		public Tuple2<String,Long> map(String input) throws Exception {
-			System.out.println("PARSE=" + input);
 			String[] tokens = input.toLowerCase().split(",");
 			String key = tokens[0];
 			Long value = Long.valueOf(tokens[1]);
-			System.out.println("Parsed: " + key + " " + value);
 			return new Tuple2<String,Long>(key,value);
 		}
 	}

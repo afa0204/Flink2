@@ -6,6 +6,8 @@ import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
+import com.dfheinz.flink.utils.Utils;
+
 
 public class ComputeSumFaultTolerant {
 
@@ -21,8 +23,9 @@ public class ComputeSumFaultTolerant {
 		System.out.println("ComputeSumFaultTolerant BEGIN");
 	
 		// Setup Checkpoint and Retry
-		// Utils.configureCheckpoint(env,checkpointBackendURL);
-		// Utils.configureRestart(env);
+		String checkpointBackendURL = "file:///home/hadoop/flink/checkpoints/";
+		Utils.configureCheckpoint(env,checkpointBackendURL);
+		Utils.configureRestart(env);
 
 		// Get Our Raw Data Stream
 		DataStream<Tuple2<String,Long>> eventStream = env

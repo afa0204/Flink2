@@ -47,6 +47,7 @@ public class Utils {
 	}
 	
 	public static void configureRestart(StreamExecutionEnvironment env) throws Exception {
+		
 		// Restart Strategy
 		// Fixed Delay
 		int restartAttempts = 3;
@@ -62,6 +63,34 @@ public class Utils {
 		
 		// No Restart
 		// env.setRestartStrategy(RestartStrategies.noRestart());
+	}	
+	
+
+	
+	public static void configureRestartFixedDelay(StreamExecutionEnvironment env) throws Exception {
+		
+		// Restart Strategy
+		// Fixed Delay
+		int restartAttempts = 3;
+		int restartDelaySeconds = 5;
+		long delayBetweenRestarts = restartDelaySeconds*1000;
+		env.setRestartStrategy(RestartStrategies.fixedDelayRestart(restartAttempts, delayBetweenRestarts));
+	}
+	
+	public static void configureFailureRate(StreamExecutionEnvironment env) throws Exception {
+		
+		// Failure Rate Restart
+		int failureRate = 3;   
+		Time failureInterval = Time.of(5, TimeUnit.MINUTES);
+		Time delayInterval = Time.of(5, TimeUnit.SECONDS);
+		env.setRestartStrategy(RestartStrategies.failureRateRestart(failureRate, failureInterval, delayInterval));
+		
+	}
+	
+	public static void configureRestartNoRestart(StreamExecutionEnvironment env) throws Exception {
+		
+		// No Restart
+		env.setRestartStrategy(RestartStrategies.noRestart());
 	}	
 	
 	
